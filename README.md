@@ -8,7 +8,7 @@ _This is a repository regarding the assignment of Distributed Systems Course in 
 * **Nikolas Giannakopoulos**
 * **Petros Chanas**
 
->The main Language used in the project is Java.
+>The main Language used in the project is Java .
 
 
 | Java     |Android App|

@@ -1,4 +1,3 @@
-package anubis.aueb.distroSys.naniapp.skeletonBackend;
 
 
 public class BrokerC {

@@ -44,17 +44,24 @@ public class Value implements Serializable {    //serializable object for all ki
         this.dataSharing = true;
     }
 
+    public Value(String name, byte[] chunk){
+        this.chunk = chunk;
+        this.name = name;
+        this.dataSharing = true;
+    }
+
     public Value(String message, Profile profile){
         this.message = message;
         this.profile = profile;
         this.dataSharing = false;
     }
 
-    public Value(String message, String name, byte[] chunk){
+    public Value(String message, String name, String topic, byte[] chunk){
         this.message = message;
         this.chunk = chunk;
         this.dataSharing = true;
         this.name = name;
+        this.topic = topic;
     }
 
     public Value(String message, String name, Profile profile, byte[] chunk){

@@ -1,10 +1,11 @@
 import java.util.HashMap;
+import java.util.Queue;
 
 public class Profile {
 
     private String username;
     private HashMap<String,MultimediaFile> userMultimediaFileMap;
-    private HashMap<MultimediaFile,String> pendingUpload;
+    private Queue<MultimediaFile> pendingUpload;
     private HashMap<String,String> userSubscribedConversations;
 
     public Profile(String username){
@@ -12,12 +13,15 @@ public class Profile {
     }
 
     public void addFileToProfile(String fileName, MultimediaFile file){
-
         userMultimediaFileMap.put(fileName,file);
     }
 
-    public void addFileToUploadQueue(MultimediaFile file,String topic){
-        pendingUpload.put(file,topic);
+    public void addFileToUploadQueue(MultimediaFile file){
+        pendingUpload.add(file);
+    }
+
+    public MultimediaFile getFileFromUploadQueue(){
+        return pendingUpload.poll();
     }
 
     public boolean checkSub(String topic){

@@ -231,20 +231,20 @@ public class Broker extends Node {
             brokerSocketOut.writeBoolean(isPublisher);
             brokerSocketOut.flush();
             System.out.println(brokerSocketIn.readObject());
-            infoTable = (InfoTable) brokerSocketIn.readObject();
-            for (Address broker :infoTable.getTopicsAssociatedWithBrokers().keySet()){
+            dataKeeper = (DataKeeper) brokerSocketIn.readObject();
+            for (Address broker :dataKeeper.getTopicsAssociatedWithBrokers().keySet()){
                 if (broker.compare(address))
-                    setTopicsAssociated(infoTable.getTopicsAssociatedWithBrokers().get(broker));
+                    setTopicsAssociated(dataKeeper.getTopicsAssociatedWithBrokers().get(broker));
             }
-            setAvailablePublishers(infoTable.getAvailablePublishers());
+            setAvailablePublishers(dataKeeper.getAvailablePublishers());
             setRegisteredPublishers();
             System.out.println(brokerSocketIn.readObject());
-            System.out.println(this.getInfoTable());
-            System.out.println("Topics associated with brokers:" + this.getInfoTable().getTopicsAssociatedWithBrokers());
-            System.out.println("Hashing id associated with brokers:" + this.getInfoTable().getHashingIDAssociatedWithBrokers());
-            System.out.println("All videos by topic: " + this.getInfoTable().getAllVideosByTopic());
-            System.out.println("Available publishers: " + this.getInfoTable().getAvailablePublishers());
-            System.out.println("Available topics: "+ this.getInfoTable().getAvailableTopics());
+            System.out.println(this.getDataKeeper());
+            System.out.println("Topics associated with brokers:" + this.getDataKeeper().getTopicsAssociatedWithBrokers());
+            System.out.println("Hashing id associated with brokers:" + this.getDataKeeper().getHashingIDAssociatedWithBrokers());
+            System.out.println("All videos by topic: " + this.getDataKeeper().getAllVideosByTopic());
+            System.out.println("Available publishers: " + this.getDataKeeper().getAvailablePublishers());
+            System.out.println("Available topics: "+ this.getDataKeeper().getAvailableTopics());
             System.out.println("Registered publishers: " + this.getRegisteredPublishers());
             System.out.println("Registered consumers: " + this.getRegisteredConsumers());
             brokerSocketIn.close();
@@ -289,21 +289,21 @@ public class Broker extends Node {
             brokerSocketOut.writeObject(allHashtagsPublished);
             brokerSocketOut.flush();
             System.out.println(brokerSocketIn.readObject());
-            infoTable = (InfoTable) brokerSocketIn.readObject();
-            for (Address broker :infoTable.getTopicsAssociatedWithBrokers().keySet()){
+            dataKeeper = (DataKeeper) brokerSocketIn.readObject();
+            for (Address broker :dataKeeper.getTopicsAssociatedWithBrokers().keySet()){
                 if (broker.compare(address))
-                    setTopicsAssociated(infoTable.getTopicsAssociatedWithBrokers().get(broker));
+                    setTopicsAssociated(dataKeeper.getTopicsAssociatedWithBrokers().get(broker));
             }
-            setAvailablePublishers(infoTable.getAvailablePublishers());
+            setAvailablePublishers(dataKeeper.getAvailablePublishers());
             setRegisteredPublishers();
             System.out.println(brokerSocketIn.readObject());
 
-            System.out.println(this.getInfoTable());
-            System.out.println("Topics associated with brokers:" + this.getInfoTable().getTopicsAssociatedWithBrokers());
-            System.out.println("Hashing id associated with brokers:" + this.getInfoTable().getHashingIDAssociatedWithBrokers());
-            System.out.println("All videos by topic: " + this.getInfoTable().getAllVideosByTopic());
-            System.out.println("Available publishers: " + this.getInfoTable().getAvailablePublishers());
-            System.out.println("Available topics: "+ this.getInfoTable().getAvailableTopics());
+            System.out.println(this.getDataKeeper());
+            System.out.println("Topics associated with brokers:" + this.getDataKeeper().getTopicsAssociatedWithBrokers());
+            System.out.println("Hashing id associated with brokers:" + this.getDataKeeper().getHashingIDAssociatedWithBrokers());
+            System.out.println("All videos by topic: " + this.getDataKeeper().getAllVideosByTopic());
+            System.out.println("Available publishers: " + this.getDataKeeper().getAvailablePublishers());
+            System.out.println("Available topics: "+ this.getDataKeeper().getAvailableTopics());
             System.out.println("Registered publishers: " + this.getRegisteredPublishers());
             System.out.println("Registered consumers: " + this.getRegisteredConsumers());
             brokerSocketIn.close();

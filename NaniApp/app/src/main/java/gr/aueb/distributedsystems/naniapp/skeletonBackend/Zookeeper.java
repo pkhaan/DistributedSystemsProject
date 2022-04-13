@@ -65,15 +65,22 @@ while (true) {
         }
     }
 
+    /**
+     * getInfoTable()
+     * @return InfoTable object (the one used in this system)
+     */
+    public synchronized DataKeeper getDataKeeper() {
+        return dataKeeper;
+    }
 
-
-
-
-
-
-
-
-
+    /**
+     * main: creates new Zookeeper obj and calls openZookeeperServer()
+     *       so that the Zookeeper starts functioning as it should
+     * @param args not used
+     */
+    public static void main(String[] args) {
+        new Zookeeper().initZKSocket();
+    }
 
 }
 

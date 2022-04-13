@@ -64,11 +64,7 @@ while (true) {
             }
         }
     }
-
-    /**
-     * getInfoTable()
-     * @return InfoTable object (the one used in this system)
-     */
+    
     public synchronized DataKeeper getDataKeeper() {
         return dataKeeper;
     }

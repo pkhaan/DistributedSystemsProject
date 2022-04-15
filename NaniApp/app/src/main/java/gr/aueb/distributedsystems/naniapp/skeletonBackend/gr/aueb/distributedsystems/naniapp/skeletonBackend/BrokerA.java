@@ -1,5 +1,5 @@
 
-
+package gr.aueb.distributedsystems.naniapp.skeletonBackend;
 
 public class BrokerA {
     public static void main(String[] args) {

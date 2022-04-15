@@ -1,4 +1,4 @@
-
+package gr.aueb.distributedsystems.naniapp.skeletonBackend;
 import java.io.*;
 import java.math.BigInteger;
 import java.net.Socket;

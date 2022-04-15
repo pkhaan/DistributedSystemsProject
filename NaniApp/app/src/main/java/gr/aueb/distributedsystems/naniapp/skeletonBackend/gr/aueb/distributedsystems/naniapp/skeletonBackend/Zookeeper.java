@@ -1,3 +1,5 @@
+package gr.aueb.distributedsystems.naniapp.skeletonBackend;
+
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -64,7 +66,7 @@ while (true) {
             }
         }
     }
-    
+
     public synchronized DataKeeper getDataKeeper() {
         return dataKeeper;
     }

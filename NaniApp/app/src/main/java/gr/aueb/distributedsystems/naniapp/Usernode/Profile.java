@@ -1,16 +1,19 @@
 import java.util.HashMap;
+import java.util.PriorityQueue;
 import java.util.Queue;
 
-public class Profile {
+public class Profile{
 
     private String username;
-    private HashMap<String,MultimediaFile> userMultimediaFileMap;
-    private Queue<MultimediaFile> pendingUpload;
-    private HashMap<String,String> userSubscribedConversations;
+    private final HashMap<String,MultimediaFile> userMultimediaFileMap;
+    private final Queue<MultimediaFile> pendingUpload;
+    private final HashMap<String,String> userSubscribedConversations;
 
     public Profile(String username){
         this.username = username;
         this.userSubscribedConversations = new HashMap<>();
+        this.pendingUpload = new PriorityQueue<>();
+        this.userMultimediaFileMap = new HashMap<>();
     }
 
     public void addFileToProfile(String fileName, MultimediaFile file){

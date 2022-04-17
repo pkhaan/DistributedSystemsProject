@@ -2,14 +2,16 @@ import java.io.*;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.Random;
+import java.util.Scanner;
 
-public class UserNode {
+public class UserNode implements Serializable {
 
     protected Socket socket;
     protected Profile profile;
 
     protected ObjectOutputStream objectOutputStream;
     protected ObjectInputStream objectInputStream;
+    protected Scanner inputScanner;
 
 
     protected static final int[] socketList = new int[]{3000};
@@ -33,7 +35,7 @@ public class UserNode {
         try{
             socket = new Socket("localhost", socketList[rnd]);
         } catch (UnknownHostException uh) {
-            System.out.println("Could not find host.");
+            System.out.println("Could not find host. ");
             uh.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
@@ -54,6 +56,7 @@ public class UserNode {
         try{
             this.objectOutputStream = new ObjectOutputStream(socket.getOutputStream());
             this.objectInputStream = new ObjectInputStream(socket.getInputStream());
+            this.inputScanner = new Scanner(System.in);
         } catch (IOException e) {
             disconnect();
         }
@@ -70,12 +73,15 @@ public class UserNode {
             if (this.socket != null) {
                 this.socket.close();
             }
+            if (this.inputScanner != null) {
+                this.inputScanner.close();
+            }
         } catch (IOException e){
             System.out.println(e.getMessage());
         }
     }
 
-    protected void switchConnection(Socket socket){
+    protected void switchConnection(Socket socket){ //not sure if this will work
         disconnect();
         this.socket = socket;
         connect(socket);
@@ -83,7 +89,7 @@ public class UserNode {
 
 
 
-    public static void main(String[] args) throws IOException { //running UserNode
+    public static void main(String[] args) { //running UserNode
 
         Profile profile = new Profile("Kostas");
         UserNode user = new UserNode(profile);

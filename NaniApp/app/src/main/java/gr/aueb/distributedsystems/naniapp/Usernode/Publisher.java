@@ -1,14 +1,14 @@
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.List;
-import java.util.Scanner;
 
 
-public class Publisher extends UserNode implements Runnable{
+public class Publisher extends UserNode implements Runnable, Serializable {
 
 
     public Publisher(){
@@ -28,38 +28,45 @@ public class Publisher extends UserNode implements Runnable{
     public void run() {
         System.out.println("Publisher established connection with Broker on port: " + this.socket.getPort());
         String topic = searchTopic();
-        Scanner scanner = new Scanner(System.in);
-        while(socket.isConnected()) {
-            String messageToSend = scanner.nextLine();
-            if (!messageToSend.equalsIgnoreCase("file")) { //for testing, we give the option to write
-                Value messageValue = new Value(messageToSend);        //"file" in console to initiate file upload
-                push(topic, messageValue);                            //which we also add to profile files
-            } else {
-                System.out.println("Please give full file path: ");
-                String path = scanner.nextLine();
-                MultimediaFile file = new MultimediaFile(path);
-                this.profile.addFileToProfile(file.getFileName(),file);
+        while(!socket.isClosed()) {
+            if (this.inputScanner.hasNextLine()){
+                String messageToSend = this.inputScanner.nextLine();
+                if (messageToSend.equalsIgnoreCase("file")) { //file to initiate file upload
+                    System.out.println("Please give full file path: \n");
+                    String path = this.inputScanner.nextLine();
+                    MultimediaFile file = new MultimediaFile(path);
+                    this.profile.addFileToProfile(file.getFileName(),file);
 
-                List<byte[]> chunkList = file.splitInChunks();
-                Value chunk;
-                for (int i = 0; i < chunkList.size(); i++) { //get all byte arrays, create chunk name and value obj
-                    String chunkName = file.getFileName().concat(String.format("_%s", i));
-                    chunk = new Value("Sending file chunk", chunkName, file.getNumberOfChunks(), chunkList.get(i));
-                    push(topic, chunk);
+                    List<byte[]> chunkList = file.splitInChunks();
+                    Value chunk;
+                    for (int i = 0; i < chunkList.size(); i++) { //get all byte arrays, create chunk name and value obj
+                        StringBuilder strB = new StringBuilder(file.getFileName());
+                        String chunkName = strB.insert(file.getFileName().lastIndexOf("."), String.format("_%s", i)).toString();
+                        chunk = new Value("Sending file chunk", chunkName, file.getNumberOfChunks() - i - 1, chunkList.get(i));
+                        push(topic, chunk);
+                    }
+                }
+                else if(messageToSend.equalsIgnoreCase("exit")) { //exit for dc
+                    disconnect();
+                }
+                else {
+                    Value messageValue = new Value(messageToSend);
+                    push(topic, messageValue);
                 }
             }
 
+            //----------NOT TESTED THREAD
             Thread autoCheck = new Thread(new Runnable() { //while taking input from clients' consoles above
                 // we automatically check for new Profile file uploads from Upload queue with a new thread
                 @Override
-                public synchronized void run() { //sync? probably
+                public synchronized void run() {
                     if (checkForNewContent()){
                         MultimediaFile uploadedFile = getNewContent();
                         List<byte[]> chunkList = uploadedFile.splitInChunks();
                         Value chunk;
                         for (int i=0; i < chunkList.size(); i++){ //get all byte arrays, create chunk name and value obj
                             String chunkName = uploadedFile.getFileName().concat(String.format("_%s", i));
-                            chunk = new Value("Sending file chunk", chunkName, uploadedFile.getNumberOfChunks(), chunkList.get(i));
+                            chunk = new Value("Sending file chunk", chunkName, uploadedFile.getNumberOfChunks()-i-1, chunkList.get(i));
                             push(topic, chunk); //if we find new profile content we split it we send it to all users
                         }  //this is probably not needed as profile page will be different on final implementation
                     }
@@ -67,31 +74,30 @@ public class Publisher extends UserNode implements Runnable{
             });
             autoCheck.start();
         }
-        scanner.close();
     }
 
     public synchronized String searchTopic(){
-        System.out.println("Please enter topic: ");
-        Scanner scanner = new Scanner(System.in);
-        String topic = scanner.nextLine();
+        System.out.print("Please enter topic: ");
+        String topic = this.inputScanner.nextLine();
         if(!profile.checkSub(topic)){          //check if subbed
             String hash = hashTopic(topic);   //if not, hash and add to profile hashmap
             if (hash!=null){
                 profile.sub(hash,topic); //we sub to the topic as well
-                System.out.printf("Subbed to topic:%s %n", topic);
+                System.out.printf("Subbed to topic:%s %n\n", topic);
             }
         }
         Value value = new Value("search",this.profile.getUsername());
         try {
             push(topic,value);
-            Value answer = (Value)objectInputStream.readObject(); //asking and receiving port number for correct Broker based on the topic
-            if (Integer.parseInt(answer.getMessage()) != socket.getPort()){ //if we are not connected to the right one, switch conn
-                switchConnection( new Socket("localhost",Integer.parseInt(answer.getMessage())));
+            int answer = (int)objectInputStream.readObject(); //asking and receiving port number for correct Broker based on the topic
+            System.out.printf("Correct broker on port: %s\n", answer);
+            if (answer != socket.getPort()){ //if we are not connected to the right one, switch conn
+                switchConnection(new Socket("localhost", answer));
             }
         } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
+            disconnect();
         }
-        scanner.close();
         return topic;
     }
 
@@ -117,6 +123,7 @@ public class Publisher extends UserNode implements Runnable{
             return hash.toString();
         } catch (NoSuchAlgorithmException e){
             System.out.println(e.getMessage());
+            disconnect();
         }
         return null;
     }
@@ -125,15 +132,16 @@ public class Publisher extends UserNode implements Runnable{
     public synchronized void push(String topic, Value value){ //initial push
 
         try {
-            System.out.printf("Trying to push to topic: %s with value: %s%n", topic , value);
-            if (value != null){
+            System.out.printf("Trying to push to topic: %s with value: %s%n\n", topic , value);
+            if (value.getMessage() != null){
                 objectOutputStream.writeObject(topic); // if value is not null write to stream
                 objectOutputStream.writeObject(value); // if value is not null write to stream
                 objectOutputStream.flush();
             }
-            else throw new RuntimeException("File or filechunk corrupted"); //else throw exc
+            else throw new RuntimeException("File or filechunk corrupted.\n"); //else throw exc
         } catch (IOException e){
             System.out.println(e.getMessage());
+            disconnect();
         }
     }
 }

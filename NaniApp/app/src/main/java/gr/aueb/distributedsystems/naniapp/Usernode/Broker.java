@@ -1,8 +1,9 @@
 import java.io.IOException;
+import java.io.Serializable;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-public class Broker {
+public class Broker implements Serializable {
 
     private final ServerSocket serverSocket;
 
@@ -23,6 +24,7 @@ public class Broker {
             closeServerSocket();
         }
     }
+
 
     public void closeServerSocket(){
         try {

@@ -1,12 +1,11 @@
 
 import java.io.*;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
-public class ClientHandler implements Runnable{
+import static java.lang.Integer.parseInt;
+
+public class ClientHandler implements Runnable, Serializable{
 
     public static ArrayList<ClientHandler> clientHandlers = new ArrayList<>();
     public static HashMap<String,byte[]> FileHashMap = new HashMap<>();
@@ -25,11 +24,9 @@ public class ClientHandler implements Runnable{
             this.out = new ObjectOutputStream(socket.getOutputStream());
             this.in = new ObjectInputStream(socket.getInputStream());
             String topic = (String)readStream(); //I know first one is string
-            out.writeObject(socket.getPort());
+            out.writeObject(socket.getLocalPort());
             out.flush();
-
-
-            // -------------------------here we check if we are the correct broker
+            // -------------------------here we need to check if we are the correct broker
             //IT'S IMPORTANT TO DISCONNECT HERE IF WE ARE NOT ON THE CORRECT ONE
             Value initialMessage = (Value)readStream(); //I know second one is value
             this.clientUsername = initialMessage.getUsername();
@@ -43,47 +40,53 @@ public class ClientHandler implements Runnable{
     @Override
     public void run() {
         Object streamObject;
-        while(socket.isConnected()) {
+        while(!socket.isClosed()){
             streamObject = readStream();
-            if (streamObject instanceof String) {
-                System.out.println(streamObject);
-                // String -> topic
-                // -------------------------here we check if we are the correct broker based on the topic
-                // if we are not the correct one it's important to disconnect here
-            } else {
-                Value value = (Value)streamObject;
-                System.out.println(value.toString());
-                if (!value.isFile()) {
-                    broadcastMessage(value); //if it's not a file just broadcast the messages
-                } else {
-                    FileHashMap.put(value.getFilename(), value.getChunk()); //if its a chunk add it to the Hashmap
+            System.out.println(streamObject);
+            if(streamObject!=null){
+                if (streamObject instanceof String) {
+                    // String -> topic
+                    // -------------------------here we check if we are the correct broker based on the topic
+                    // if we are not the correct one it's important to disconnect here
+                } else if (streamObject instanceof Value value){
+                    if (!value.isFile()) {
+                        broadcastMessage(value); //ixf it's not a file just broadcast the message
+                    } else {
+                        FileHashMap.put(value.getFilename(), value.getChunk()); //if its a chunk add it to the Hashmap
+                    }
                 }
             }
         }
-        writeFile(); //testing
     }
 
-    public Object readStream(){
+    public synchronized Object readStream(){ //main reading object method
         try {
             return in.readObject();
-        } catch (ClassNotFoundException cnf){
-            System.out.println(cnf.getMessage());
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (ClassNotFoundException | IOException e){
+            writeFile(); //on exception (client dc) we write the file as a test
+            closeEverything(socket, out, in);
+            System.out.println(e.getMessage());
         }
         return null;
     }
 
-    //testing method toFile()
-
-    public static void writeFile(){
+    //testing method to see if data passing is done correctly.
+    public synchronized void writeFile(){
+        System.out.println("Writing to file...\n");
         File downloadedFile = new File("C:\\Users\\kosta\\Desktop\\new_download.mp4");
         try{
-            List<byte[]> chunkList = new ArrayList<>();
+            int chunkNumber = 0;
+            for (Map.Entry<String, byte[]> entry : FileHashMap.entrySet()) {
+                chunkNumber++;
+            }
+            byte[][] chunkList = new byte[chunkNumber][];
             String filename = "test";
             for (Map.Entry<String, byte[]> entry : FileHashMap.entrySet()){
-                if (entry.getKey().contains("test")){
-                    chunkList.add(entry.getValue());
+                if (entry.getKey().contains(filename)){
+                    String chunkname = entry.getKey();
+                    int index = parseInt(chunkname.substring(chunkname.indexOf(".") - 1, chunkname.indexOf(".")));
+                    System.out.println(index);
+                    chunkList[index] = entry.getValue();
                 }
             }
             FileOutputStream os = new FileOutputStream(downloadedFile);
@@ -92,6 +95,7 @@ public class ClientHandler implements Runnable{
             }
             os.close();
         } catch (IOException e){
+            closeEverything(socket, out, in);
             System.out.println("Could not get file!");
         }
     }

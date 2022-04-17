@@ -1,93 +1,49 @@
 import java.io.Serializable;
+import java.util.Arrays;
 
 public class Value implements Serializable {    //serializable object for all kinds of communication
                                                 // with brokers as well as data passing
 
-    private String message, topic, name;
-    private MultimediaFile multimediaFile;
-    private Profile profile;
-    private final boolean dataSharing;
-
+    private String message, username, filename;
     private byte[] chunk;
+    private int remainingChunks;
+    private final boolean fileSharing;
 
     public Value(String message){
         this.message = message;
-        this.dataSharing = true;
+        this.fileSharing = false;
     }
 
-    public Value(String message, String topic){
+    public Value(String message, String username) {
         this.message = message;
-        this.topic = topic;
-        this.dataSharing = true;
+        this.username = username;
+        this.fileSharing = false;
     }
 
-    public Value(MultimediaFile file){
-        this.multimediaFile = file;
-        this.dataSharing = true;
-        this.name = file.getFileName();
+    public Value(Value value){
+        this.message = value.message;
+        this.username = value.username;
+        this.filename = value.filename;
+        this.remainingChunks = value.remainingChunks;
+        this.chunk = Arrays.copyOf(value.chunk,value.chunk.length);
+        this.fileSharing = false;
     }
 
-    public Value(String message, MultimediaFile file){
+    public Value(String message, String chunkName, int remainingChunks, byte[] chunk){
         this.message = message;
-        this.multimediaFile = file;
-        this.dataSharing = true;
-        this.name = file.getFileName();
-    }
-
-    public Value(Profile profile){
-        this.profile = profile;
-        this.dataSharing = false;
-    }
-
-    public Value(byte[] chunk){
-        this.chunk = chunk;
-        this.dataSharing = true;
-    }
-
-    public Value(String name, byte[] chunk){
-        this.chunk = chunk;
-        this.name = name;
-        this.dataSharing = true;
-    }
-
-    public Value(String message, Profile profile){
-        this.message = message;
-        this.profile = profile;
-        this.dataSharing = false;
-    }
-
-    public Value(String message, String name, String topic, byte[] chunk){
-        this.message = message;
-        this.chunk = chunk;
-        this.dataSharing = true;
-        this.name = name;
-        this.topic = topic;
-    }
-
-    public Value(String message, String name, Profile profile, byte[] chunk){
-        this.message = message;
-        this.profile = profile;
-        this.chunk = chunk;
-        this.name = name;
-        this.dataSharing = true;
-    }
-
-    public Value(String message, Profile profile, MultimediaFile file){
-        this.message = message;
-        this.profile = profile;
-        this.multimediaFile = file;
-        this.dataSharing = true;
-        this.name = file.getFileName();
+        this.chunk = Arrays.copyOf(chunk,chunk.length);
+        this.remainingChunks = remainingChunks;
+        this.filename = chunkName;
+        this.fileSharing = true;
     }
 
     @Override //toString override for printing non data sharing attr of our custom object
     public String toString() {
         return "Value{" +
                 "message='" + message + '\'' +
-                ", fileName='" + name + '\'' +
-                ", profileName='" + profile.getUsername() + '\'' +
-                ", dataSharing=" + dataSharing +
-                ", topic=" + topic +
+                ", fileName='" + filename + '\'' +
+                ", profileName='" + username + '\'' +
+                ", number of remaining Chunks='" + remainingChunks + '\'' +
                 '}';
     }
 
@@ -96,57 +52,28 @@ public class Value implements Serializable {    //serializable object for all ki
         return message;
     }
 
-    public String getTopic() {
-        return topic;
-    }
-
-    public void setTopic(String topic) {
-        this.topic = topic;
+    public boolean isFile(){
+        return this.fileSharing;
     }
 
     public void setMessage(String message) {
         this.message = message;
     }
 
-    public String getFileName() {
-        return multimediaFile.getFileName();
+    public String getUsername() {
+        return this.username;
     }
 
-    public String getName() {
-        return this.name;
+    public int getRemainingChunks() {
+        return remainingChunks;
     }
 
-    public void setName(String name) {
-        this.name= name;
-    }
-
-    public String getProfileName() {
-        return profile.getUsername();
-    }
-
-    public MultimediaFile getMultimediaFile() {
-        return multimediaFile;
-    }
-
-    public void setMultimediaFile(MultimediaFile multimediaFile) {
-        this.multimediaFile = multimediaFile;
-    }
-
-    public Profile getProfile() {
-        return profile;
-    }
-
-    public void setProfile(Profile profile) {
-        this.profile = profile;
+    public String getFilename(){
+        return this.filename;
     }
 
     public void setChunk(byte[] chunk) {
         this.chunk = chunk;
-    }
-
-
-    public boolean isDataSharing() {
-        return dataSharing;
     }
 
     public byte[] getChunk() {

@@ -32,7 +32,7 @@ public class Publisher extends UserNode implements Runnable{
         while(socket.isConnected()) {
             String messageToSend = scanner.nextLine();
             if (!messageToSend.equalsIgnoreCase("file")) { //for testing, we give the option to write
-                Value messageValue = new Value(messageToSend);        //file in console to initiate file upload
+                Value messageValue = new Value(messageToSend);        //"file" in console to initiate file upload
                 push(topic, messageValue);                            //which we also add to profile files
             } else {
                 System.out.println("Please give full file path: ");
@@ -44,13 +44,13 @@ public class Publisher extends UserNode implements Runnable{
                 Value chunk;
                 for (int i = 0; i < chunkList.size(); i++) { //get all byte arrays, create chunk name and value obj
                     String chunkName = file.getFileName().concat(String.format("_%s", i));
-                    chunk = new Value("Sending file chunk", chunkName, topic, chunkList.get(i));
+                    chunk = new Value("Sending file chunk", chunkName, file.getNumberOfChunks(), chunkList.get(i));
                     push(topic, chunk);
                 }
             }
 
             Thread autoCheck = new Thread(new Runnable() { //while taking input from clients' consoles above
-                                                //we automatically check for new Profile file uploads from Upload queue
+                // we automatically check for new Profile file uploads from Upload queue with a new thread
                 @Override
                 public synchronized void run() { //sync? probably
                     if (checkForNewContent()){
@@ -59,7 +59,7 @@ public class Publisher extends UserNode implements Runnable{
                         Value chunk;
                         for (int i=0; i < chunkList.size(); i++){ //get all byte arrays, create chunk name and value obj
                             String chunkName = uploadedFile.getFileName().concat(String.format("_%s", i));
-                            chunk = new Value("Sending file chunk", chunkName, topic, chunkList.get(i));
+                            chunk = new Value("Sending file chunk", chunkName, uploadedFile.getNumberOfChunks(), chunkList.get(i));
                             push(topic, chunk); //if we find new profile content we split it we send it to all users
                         }  //this is probably not needed as profile page will be different on final implementation
                     }
@@ -67,6 +67,7 @@ public class Publisher extends UserNode implements Runnable{
             });
             autoCheck.start();
         }
+        scanner.close();
     }
 
     public synchronized String searchTopic(){
@@ -76,13 +77,13 @@ public class Publisher extends UserNode implements Runnable{
         if(!profile.checkSub(topic)){          //check if subbed
             String hash = hashTopic(topic);   //if not, hash and add to profile hashmap
             if (hash!=null){
-                profile.sub(hash,topic);
+                profile.sub(hash,topic); //we sub to the topic as well
+                System.out.printf("Subbed to topic:%s %n", topic);
             }
         }
-        Value value = new Value("search",topic);
+        Value value = new Value("search",this.profile.getUsername());
         try {
-            objectOutputStream.writeObject(value);
-            objectOutputStream.flush();
+            push(topic,value);
             Value answer = (Value)objectInputStream.readObject(); //asking and receiving port number for correct Broker based on the topic
             if (Integer.parseInt(answer.getMessage()) != socket.getPort()){ //if we are not connected to the right one, switch conn
                 switchConnection( new Socket("localhost",Integer.parseInt(answer.getMessage())));
@@ -105,7 +106,6 @@ public class Publisher extends UserNode implements Runnable{
     }
 
 
-
     public String hashTopic(String topic){ //hash topic with MD5
         try{
             MessageDigest md = MessageDigest.getInstance("MD5");
@@ -122,14 +122,16 @@ public class Publisher extends UserNode implements Runnable{
     }
 
 
-    public synchronized void push(String topic, Value value){ //main push function
+    public synchronized void push(String topic, Value value){ //initial push
 
         try {
+            System.out.printf("Trying to push to topic: %s with value: %s%n", topic , value);
             if (value != null){
+                objectOutputStream.writeObject(topic); // if value is not null write to stream
                 objectOutputStream.writeObject(value); // if value is not null write to stream
                 objectOutputStream.flush();
             }
-            else throw new RuntimeException("File or file chunk corrupted"); //else throw exc
+            else throw new RuntimeException("File or filechunk corrupted"); //else throw exc
         } catch (IOException e){
             System.out.println(e.getMessage());
         }

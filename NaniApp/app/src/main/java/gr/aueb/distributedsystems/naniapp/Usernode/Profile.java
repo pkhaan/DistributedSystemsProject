@@ -10,6 +10,7 @@ public class Profile {
 
     public Profile(String username){
         this.username = username;
+        this.userSubscribedConversations = new HashMap<>();
     }
 
     public void addFileToProfile(String fileName, MultimediaFile file){

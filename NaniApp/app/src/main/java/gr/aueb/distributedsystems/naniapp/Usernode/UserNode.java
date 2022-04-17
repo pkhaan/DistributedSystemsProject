@@ -12,7 +12,7 @@ public class UserNode {
     protected ObjectInputStream objectInputStream;
 
 
-    protected static final int[] socketList = new int[]{3000, 4000, 5000};
+    protected static final int[] socketList = new int[]{3000};
 
     public UserNode(){
         this(getRandomSocket(),createProfile());
@@ -90,10 +90,10 @@ public class UserNode {
         Socket initSocket = user.getSocket();
 
         Publisher publisher = new Publisher(initSocket,profile);
-        Consumer consumer = new Consumer(initSocket,profile);
+        //Consumer consumer = new Consumer(initSocket,profile);
 
         new Thread(publisher).start();
-        new Thread(consumer).start();
+       // new Thread(consumer).start();
     }
 }
 

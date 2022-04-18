@@ -1,6 +1,7 @@
 import java.io.*;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.Random;
 import java.util.Scanner;
 
@@ -13,8 +14,9 @@ public class UserNode implements Serializable {
     protected ObjectInputStream objectInputStream;
     protected Scanner inputScanner;
 
-
-    protected static final int[] socketList = new int[]{3000};
+    protected static final int[] portList = new int[]{3000};
+    protected static ArrayList<Publisher> alivePublisherConnections;
+    protected static ArrayList<Consumer> aliveConsumerConnections;
 
     public UserNode(){
         this(getRandomSocket(),createProfile());
@@ -27,13 +29,15 @@ public class UserNode implements Serializable {
     public UserNode(Socket socket, Profile profile) { //user node initialization
         this.socket = socket;
         this.profile = profile;
+        alivePublisherConnections = new ArrayList<>();
+        aliveConsumerConnections = new ArrayList<>();
     }
 
     private static Socket getRandomSocket(){ //generates a random port for initial communication with a random Broker
         Socket socket = null;
-        int rnd = new Random().nextInt(socketList.length);
+        int rnd = new Random().nextInt(portList.length);
         try{
-            socket = new Socket("localhost", socketList[rnd]);
+            socket = new Socket("localhost", portList[rnd]);;
         } catch (UnknownHostException uh) {
             System.out.println("Could not find host. ");
             uh.printStackTrace();
@@ -43,9 +47,6 @@ public class UserNode implements Serializable {
         return socket;
     }
 
-    public Socket getSocket(){
-        return this.socket;
-    }
 
     private static Profile createProfile(){ //creates a noUsername empty profile
         return new Profile("NoUsername");
@@ -81,25 +82,75 @@ public class UserNode implements Serializable {
         }
     }
 
-    protected void switchConnection(Socket socket){ //not sure if this will work
-        disconnect();
-        this.socket = socket;
-        connect(socket);
+    protected void disconnectPublishers() {
+        for (Publisher pub : alivePublisherConnections) {
+            try {
+                if (pub.objectInputStream != null) {
+                    pub.objectInputStream.close();
+                }
+                if (pub.objectOutputStream != null) {
+                    pub.objectOutputStream.close();
+                }
+                if (pub.socket != null) {
+                    pub.socket.close();
+                }
+                if (pub.inputScanner != null) {
+                    pub.inputScanner.close();
+                }
+            } catch (IOException e) {
+                System.out.println(e.getMessage());
+            }
+        }
+    }
+    protected void disconnectConsumers(){
+        for (Consumer con : aliveConsumerConnections){
+            try {
+                if (con.objectInputStream != null) {
+                    con.objectInputStream.close();
+                }
+                if (con.objectOutputStream != null) {
+                    con.objectOutputStream.close();
+                }
+                if (con.socket != null) {
+                    con.socket.close();
+                }
+                if (con.inputScanner != null) {
+                    con.inputScanner.close();
+                }
+            } catch (IOException e){
+                System.out.println(e.getMessage());
+            }
+        }
+    }
+
+    protected void disconnectAll(){
+        disconnectPublishers();
+        disconnectConsumers();
+    }
+
+    protected void switchConnection(int port) {
+        try {
+            this.socket = new Socket("localhost", port);
+
+        } catch (IOException e){
+            System.out.println(e.getMessage());
+            disconnectAll();
+        }
+        connect(this.socket);
     }
 
 
-
-    public static void main(String[] args) { //running UserNode
+    public static void main(String[] args) throws IOException { //running UserNode
 
         Profile profile = new Profile("Kostas");
-        UserNode user = new UserNode(profile);
-        Socket initSocket = user.getSocket();
-
-        Publisher publisher = new Publisher(initSocket,profile);
-        //Consumer consumer = new Consumer(initSocket,profile);
-
-        new Thread(publisher).start();
-       // new Thread(consumer).start();
+        Publisher kostaspub = new Publisher(profile);
+        Consumer kostascon = new Consumer(profile);
+        Thread pub = new Thread(kostaspub); //initiating both on random port
+        Thread con = new Thread(kostascon);
+        MultimediaFile upload = new MultimediaFile("C:\\Users\\kosta\\Desktop\\test.png");
+        kostaspub.profile.addFileToProfile(upload.getFileName(),upload);
+        pub.start();
+        con.start();
     }
 }
 

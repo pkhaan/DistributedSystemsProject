@@ -1,4 +1,5 @@
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.PriorityQueue;
 import java.util.Queue;
 
@@ -12,12 +13,14 @@ public class Profile{
     public Profile(String username){
         this.username = username;
         this.userSubscribedConversations = new HashMap<>();
-        this.pendingUpload = new PriorityQueue<>();
+        this.pendingUpload = new LinkedList<>();
         this.userMultimediaFileMap = new HashMap<>();
     }
 
     public void addFileToProfile(String fileName, MultimediaFile file){
+
         userMultimediaFileMap.put(fileName,file);
+        addFileToUploadQueue(file);
     }
 
     public void addFileToUploadQueue(MultimediaFile file){

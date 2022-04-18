@@ -39,6 +39,7 @@ public class Broker implements Serializable {
     public static void main(String[] args) throws IOException {
 
         ServerSocket serverSocket = new ServerSocket(3000);
+        System.out.println("Initiating: " + serverSocket);
         Broker broker = new Broker(serverSocket);
         broker.startBroker();
     }

@@ -11,17 +11,16 @@ import java.util.List;
 public class Publisher extends UserNode implements Runnable, Serializable {
 
 
-    public Publisher(){
-        super();
-    }
-
     public Publisher(Profile profile){
         super(profile);
+        connect(socket);
+        alivePublisherConnections.add(this);
     }
 
-    public Publisher(Socket socket, Profile profile) {
+    public Publisher(Socket socket, Profile profile){
         super(socket, profile);
         connect(socket);
+        alivePublisherConnections.add(this);
     }
 
     @Override
@@ -31,20 +30,12 @@ public class Publisher extends UserNode implements Runnable, Serializable {
         while(!socket.isClosed()) {
             if (this.inputScanner.hasNextLine()){
                 String messageToSend = this.inputScanner.nextLine();
-                if (messageToSend.equalsIgnoreCase("file")) { //file to initiate file upload
+                if (messageToSend.equalsIgnoreCase("file")) { //type file to initiate file upload
                     System.out.println("Please give full file path: \n");
                     String path = this.inputScanner.nextLine();
                     MultimediaFile file = new MultimediaFile(path);
                     this.profile.addFileToProfile(file.getFileName(),file);
-
-                    List<byte[]> chunkList = file.splitInChunks();
-                    Value chunk;
-                    for (int i = 0; i < chunkList.size(); i++) { //get all byte arrays, create chunk name and value obj
-                        StringBuilder strB = new StringBuilder(file.getFileName());
-                        String chunkName = strB.insert(file.getFileName().lastIndexOf("."), String.format("_%s", i)).toString();
-                        chunk = new Value("Sending file chunk", chunkName, file.getNumberOfChunks() - i - 1, chunkList.get(i));
-                        push(topic, chunk);
-                    }
+                    pushChunks(topic, file);
                 }
                 else if(messageToSend.equalsIgnoreCase("exit")) { //exit for dc
                     disconnect();
@@ -55,24 +46,28 @@ public class Publisher extends UserNode implements Runnable, Serializable {
                 }
             }
 
-            //----------NOT TESTED THREAD
             Thread autoCheck = new Thread(new Runnable() { //while taking input from clients' consoles above
                 // we automatically check for new Profile file uploads from Upload queue with a new thread
                 @Override
-                public synchronized void run() {
+                public void run() {
                     if (checkForNewContent()){
                         MultimediaFile uploadedFile = getNewContent();
-                        List<byte[]> chunkList = uploadedFile.splitInChunks();
-                        Value chunk;
-                        for (int i=0; i < chunkList.size(); i++){ //get all byte arrays, create chunk name and value obj
-                            String chunkName = uploadedFile.getFileName().concat(String.format("_%s", i));
-                            chunk = new Value("Sending file chunk", chunkName, uploadedFile.getNumberOfChunks()-i-1, chunkList.get(i));
-                            push(topic, chunk); //if we find new profile content we split it we send it to all users
-                        }  //this is probably not needed as profile page will be different on final implementation
+                        pushChunks(topic, uploadedFile);
                     }
                 }
             });
             autoCheck.start();
+        }
+    }
+
+    public synchronized void pushChunks(String topic, MultimediaFile file){ //splitting in chunks and pushing each one
+        List<byte[]> chunkList = file.splitInChunks();
+        Value chunk;
+        for (int i = 0; i < chunkList.size(); i++) { //get all byte arrays, create chunk name and value obj
+            StringBuilder strB = new StringBuilder(file.getFileName());
+            String chunkName = strB.insert(file.getFileName().lastIndexOf("."), String.format("_%s", i)).toString();
+            chunk = new Value("Sending file chunk", chunkName, file.getNumberOfChunks() - i - 1, chunkList.get(i));
+            push(topic, chunk);
         }
     }
 
@@ -92,7 +87,7 @@ public class Publisher extends UserNode implements Runnable, Serializable {
             int answer = (int)objectInputStream.readObject(); //asking and receiving port number for correct Broker based on the topic
             System.out.printf("Correct broker on port: %s\n", answer);
             if (answer != socket.getPort()){ //if we are not connected to the right one, switch conn
-                switchConnection(new Socket("localhost", answer));
+                switchConnection(answer);
             }
         } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
@@ -107,7 +102,7 @@ public class Publisher extends UserNode implements Runnable, Serializable {
         return this.profile.checkUploadQueueCount() > 0; //check if there are any items under upload Q 
     }
 
-    private synchronized MultimediaFile getNewContent(){ //gets first item in upload Q
+    private MultimediaFile getNewContent(){ //gets first item in upload Q
         return this.profile.getFileFromUploadQueue();
     }
 
@@ -138,7 +133,7 @@ public class Publisher extends UserNode implements Runnable, Serializable {
                 objectOutputStream.writeObject(value); // if value is not null write to stream
                 objectOutputStream.flush();
             }
-            else throw new RuntimeException("File or filechunk corrupted.\n"); //else throw exc
+            else throw new RuntimeException("File or file chunk corrupted.\n"); //else throw exc
         } catch (IOException e){
             System.out.println(e.getMessage());
             disconnect();

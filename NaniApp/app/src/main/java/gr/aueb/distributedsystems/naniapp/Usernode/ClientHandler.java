@@ -50,7 +50,7 @@ public class ClientHandler implements Runnable, Serializable{
                     // if we are not the correct one it's important to disconnect here
                 } else if (streamObject instanceof Value value){
                     if (!value.isFile()) {
-                        broadcastMessage(value); //ixf it's not a file just broadcast the message
+                        broadcastMessage(value); //if it's not a file just broadcast the message
                     } else {
                         FileHashMap.put(value.getFilename(), value.getChunk()); //if its a chunk add it to the Hashmap
                     }
@@ -73,7 +73,7 @@ public class ClientHandler implements Runnable, Serializable{
     //testing method to see if data passing is done correctly.
     public synchronized void writeFile(){
         System.out.println("Writing to file...\n");
-        File downloadedFile = new File("C:\\Users\\kosta\\Desktop\\new_download.mp4");
+        File downloadedFile = new File("C:\\Users\\kosta\\Desktop\\new_download.png");
         try{
             int chunkNumber = 0;
             for (Map.Entry<String, byte[]> entry : FileHashMap.entrySet()) {

@@ -1,7 +1,9 @@
+package main.java;
+
 import java.io.*;
 import java.net.Socket;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Random;
 import java.util.Scanner;
 
@@ -9,42 +11,41 @@ public class UserNode implements Serializable {
 
     protected Socket socket;
     protected Profile profile;
+    protected int currentPort;
+    protected final String pubRequest = "Publisher";
+    protected final String conRequest = "Consumer";
+    protected final String downloadPath = "C:\\Users\\kosta\\Desktop\\DownloadedContent";
 
     protected ObjectOutputStream objectOutputStream;
     protected ObjectInputStream objectInputStream;
     protected Scanner inputScanner;
 
     protected static final int[] portList = new int[]{3000};
+    protected static ArrayList<String> topicList = new ArrayList<>(
+            Arrays.asList("DS1", "DS2", "DS3"));
+
+
     protected static ArrayList<Publisher> alivePublisherConnections;
     protected static ArrayList<Consumer> aliveConsumerConnections;
 
+
     public UserNode(){
-        this(getRandomSocket(),createProfile());
+        this(getRandomSocketPort(),createProfile());
     }
 
     public UserNode(Profile profileName){
-        this(getRandomSocket(),profileName);
+        this(getRandomSocketPort(),profileName);
     }
 
-    public UserNode(Socket socket, Profile profile) { //user node initialization
-        this.socket = socket;
+    public UserNode(int port, Profile profile) { //user node initialization
+        this.currentPort = port;
         this.profile = profile;
         alivePublisherConnections = new ArrayList<>();
         aliveConsumerConnections = new ArrayList<>();
     }
 
-    private static Socket getRandomSocket(){ //generates a random port for initial communication with a random Broker
-        Socket socket = null;
-        int rnd = new Random().nextInt(portList.length);
-        try{
-            socket = new Socket("localhost", portList[rnd]);;
-        } catch (UnknownHostException uh) {
-            System.out.println("Could not find host. ");
-            uh.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return socket;
+    private static int getRandomSocketPort(){ //generates a random port for initial communication with a random Broker
+        return portList[new Random().nextInt(portList.length)];
     }
 
 
@@ -52,9 +53,26 @@ public class UserNode implements Serializable {
         return new Profile("NoUsername");
     } //creates a noUsername prof
 
+    protected synchronized String consoleInput(String message){
+        System.out.println(message);
+        String input = null;
+        if (this.inputScanner.hasNextLine()) {
+            input = this.inputScanner.nextLine();
+        }
+        return input;
+    }
 
-    protected void connect(Socket socket){
+    protected synchronized String consoleInput(){
+        String input = null;
+        if (this.inputScanner.hasNextLine()) {
+            input = this.inputScanner.nextLine();
+        }
+        return input;
+    }
+
+    protected void connect(int port){
         try{
+            this.socket = new Socket("localhost", port);
             this.objectOutputStream = new ObjectOutputStream(socket.getOutputStream());
             this.objectInputStream = new ObjectInputStream(socket.getInputStream());
             this.inputScanner = new Scanner(System.in);
@@ -128,30 +146,19 @@ public class UserNode implements Serializable {
         disconnectConsumers();
     }
 
-    protected void switchConnection(int port) {
-        try {
-            this.socket = new Socket("localhost", port);
 
-        } catch (IOException e){
-            System.out.println(e.getMessage());
-            disconnectAll();
-        }
-        connect(this.socket);
-    }
+    public static void main(String[] args) { //running UserNode
 
-
-    public static void main(String[] args) throws IOException { //running UserNode
-
-        Profile profile = new Profile("Kostas");
+        Profile profile = new Profile("Mitsos");
         Publisher kostaspub = new Publisher(profile);
         Consumer kostascon = new Consumer(profile);
         Thread pub = new Thread(kostaspub); //initiating both on random port
         Thread con = new Thread(kostascon);
-        MultimediaFile upload = new MultimediaFile("C:\\Users\\kosta\\Desktop\\test.png");
-        kostaspub.profile.addFileToProfile(upload.getFileName(),upload);
+        //MultimediaFile upload = new MultimediaFile("C:\\Users\\kosta\\Desktop\\test.png");
+        //kostaspub.profile.addFileToProfile(upload.getFileName(),upload);
+        //above upload is working but happens twice due to second thread AUTOCHECK on publisher main run
         pub.start();
         con.start();
     }
 }
-
 

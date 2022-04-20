@@ -1,10 +1,12 @@
 package main.java;
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
-public class Consumer extends UserNode implements Runnable, Serializable {
+import static java.lang.Integer.parseInt;
 
+public class Consumer extends UserNode implements Runnable,Serializable {
 
 
     public Consumer(Profile profile){
@@ -24,26 +26,45 @@ public class Consumer extends UserNode implements Runnable, Serializable {
     @Override
     public void run() {
         System.out.println("Consumer established connection with Broker on port: " + this.socket.getPort());
-        String topic = consoleInput("Please type conversation to check: ");
+        String topic = consoleInput("Please enter consumer topic: ");
         if (topic != null) {
             int response = checkBroker(topic);
             if (response != socket.getPort()) {
+                System.out.println("SYSTEM: Switching Consumer connection to another broker on port: " + response);
                 connect(response);
             } else {
-                while (!socket.isClosed()) {
-                    List<Value> data = getConversationData(topic);
-                    List<Value> chunkList = new ArrayList<>();
-                    for (Value message : data) {
-                        if (message.isFile()) {
-                            chunkList.add(message);
-                            writeFiles(chunkList);
-                        } else {
-                            System.out.println(message.getProfile().getUsername() + ": " + message.getMessage());
-                        }
+                List<Value> data = getConversationData(topic); //getting conversation data at first
+                List<Value> chunkList = new ArrayList<>();
+                for (Value message : data) {
+                    if (message.isFile()) {
+                        chunkList.add(message);
+                        writeFiles(chunkList);
+                    } else {
+                        System.out.println(message.getProfile().getUsername() + ": " + message.getMessage());
                     }
+                }
+                while (!socket.isClosed()) {
+                    listenForMessage(); //listening for messages
                 }
             }
         }
+    }
+
+    private void listenForMessage(){
+        try {
+            Object message = objectInputStream.readObject();
+            System.out.println("Receiving live chat message:" + message);
+            if (message instanceof Value && ((Value)message).getRequestType().equalsIgnoreCase("liveMessage")){
+                System.out.println(((Value) message).getProfile().getUsername() +":" + ((Value) message).getMessage());
+            }
+            else{
+                //need to implement broadcasting file
+            }
+        } catch (IOException | ClassNotFoundException e) {
+            System.out.println(e.getMessage());
+            disconnect();
+        }
+
     }
 
 
@@ -81,34 +102,27 @@ public class Consumer extends UserNode implements Runnable, Serializable {
     private synchronized void writeFiles(List<Value> chunkList){ //withdrawal and writing of files from the
         List<String> filenames = new ArrayList<>(); //random chunkList that we received
         String temp = "";
-        for (Value chunk : chunkList){
+        for (Value chunk : chunkList){ //getting all different filenames from the chunkList received
+            System.out.println("----Received chunk: " + chunk);
             String chunkName = chunk.getFilename();
-            System.out.println(chunkName);
-            String filename = chunkName.substring(0, chunkName.indexOf("_") - 1);
+            String filename = chunkName.substring(0, chunkName.indexOf("_"));
             String fileExt = chunkName.substring(chunkName.indexOf("."));
             if(!temp.contains(filename)){
                 temp = filename;
                 filenames.add(filename + fileExt);
             }
         }
-        for (String filename : filenames){
-            File download = new File(downloadPath + filename);
-            FileOutputStream os = null;
-            for (Value chunk : chunkList){
-                if (chunk.getFilename().startsWith(filename.substring(0, filename.indexOf("_") - 1))){
-                    try {
-                        os = new FileOutputStream(download);
-                        os.write(chunk.getChunk());
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                        disconnect();
-                    }
-                }
-            }
+        for (String filename : filenames) { //for each filename create a file on the download path
+            System.out.println("----Found name: " + filename);
+            Value[] sortedChunks = sortChunks(filename, chunkList);
+            System.out.println(Arrays.toString(sortedChunks));
+            File download = new File(downloadPath + sortedChunks[0].getProfile().getUsername() + "_" + filename);
             try {
-                if (os != null) {
-                    os.close();
+                FileOutputStream os = new FileOutputStream(download);
+                for (Value chunk : sortedChunks) {
+                    os.write(chunk.getChunk());
                 }
+                os.close();
             } catch (IOException e) {
                 e.printStackTrace();
                 disconnect();
@@ -116,37 +130,20 @@ public class Consumer extends UserNode implements Runnable, Serializable {
         }
     }
 
-}
-
-
-  /*
-        Value brokerList = getBrokerList();
-        if (brokerList != null){
-
-        }
-    }
-
-
-    public synchronized Value getBrokerList(){
-        Value value = new Value("Brokerlist.", "Consumer");
-        try {
-            objectOutputStream.writeObject(value);
-            objectOutputStream.flush();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        Value answer = null;
-        try {
-            if (objectInputStream.readObject() instanceof Value){
-                answer = (Value)objectInputStream.readObject();
+    private Value[] sortChunks(String filename, List<Value> chunks){ //retrieving and sorting chunks for
+        List<Value> filenameChunks = new ArrayList<>(); // a specific filename
+        for (Value chunk : chunks) {
+            if (chunk.getFilename().startsWith(filename.substring(0, filename.indexOf(".")))){
+                filenameChunks.add(chunk);
             }
-        }catch (IOException | ClassNotFoundException e){
-            e.printStackTrace();
         }
-        return answer;
+        Value[] sortedChunks = new Value[filenameChunks.size()];
+        for (Value chunk : filenameChunks){
+            int index = parseInt(chunk.getFilename().substring(chunk.getFilename().indexOf("_") + 1,
+                    chunk.getFilename().indexOf("_") + 2) );
+            sortedChunks[index] = chunk;
+        }
+        return sortedChunks;
     }
 
-    public synchronized void updateBrokerAndTopicInformation(){
-
-    }
-    */
+}

@@ -2,14 +2,16 @@ package main.java;
 import java.io.IOException;
 import java.io.Serializable;
 import java.net.*;
+import java.util.HashMap;
 
 public class Broker implements Serializable {
 
     private final int id;
-    protected static final int[] portList = new int[]{3000,4000,5000};
     private final InetAddress address;
 
-
+    private HashMap<Integer,String> portsAndAddresses; //ports and addresses
+    private HashMap<Integer,HashMap<Integer,String>> availableBrokers; //ids, ports and addresses
+    private HashMap<Integer,String> availableTopics; //hash and topics
 
     private final ServerSocket serverSocket;
 
@@ -23,7 +25,7 @@ public class Broker implements Serializable {
         try {
             while (!serverSocket.isClosed()){
                 Socket socket = serverSocket.accept();
-                System.out.println("A new component connected!");
+                System.out.println("SYSTEM: A new component connected!");
                 ClientHandler clientHandler = new ClientHandler(socket);
                 Thread thread = new Thread(clientHandler);
                 thread.start();
@@ -40,7 +42,7 @@ public class Broker implements Serializable {
                 serverSocket.close();
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            System.out.println(e.getMessage());
         }
     }
 
@@ -66,14 +68,20 @@ public class Broker implements Serializable {
         return this.id;
     }
 
+    public void retrieveBrokers(){
+        //from config file
+    }
 
+    public void retrieveTopics(){
+        //from config file
+    }
 
 
     public static void main(String[] args) throws IOException {
 
-        ServerSocket serverSocket = new ServerSocket(3000);
+        ServerSocket serverSocket = new ServerSocket(4000);
         Broker broker = new Broker(serverSocket, InetAddress.getByName("localhost"), 1);
-        System.out.println("Broker_" + broker.getBrokerID()+" connected at: " + serverSocket + "with address: " +  broker.getBrokerAddress()
+        System.out.println("SYSTEM: Broker_" + broker.getBrokerID()+" connected at: " + serverSocket + "with address: " +  broker.getBrokerAddress()
         + " and hashcode: " + broker.getBrokerHash());
         broker.startBroker();
     }

@@ -14,7 +14,7 @@ public class UserNode implements Serializable {
     protected int currentPort;
     protected final String pubRequest = "Publisher";
     protected final String conRequest = "Consumer";
-    protected final String downloadPath = "C:\\Users\\kosta\\Desktop\\DownloadedContent";
+    protected final String downloadPath = "C:\\Users\\kosta\\Desktop\\DownloadedContent\\";
 
     protected ObjectOutputStream objectOutputStream;
     protected ObjectInputStream objectInputStream;
@@ -81,7 +81,7 @@ public class UserNode implements Serializable {
         }
     }
 
-    protected void disconnect(){
+    protected void disconnect(){ //this disconnects a single component (consumer/publisher) but not both
         try {
             if (this.objectInputStream != null) {
                 this.objectInputStream.close();
@@ -100,7 +100,50 @@ public class UserNode implements Serializable {
         }
     }
 
-    protected void disconnectPublishers() {
+    protected void disconnectComponents(int port){ //this disconnects both as consumer and as publisher from a broker
+        for (Consumer consumer : aliveConsumerConnections){
+            if (consumer.currentPort == port){
+                try {
+                    if (consumer.objectInputStream != null) {
+                        consumer.objectInputStream.close();
+                    }
+                    if (consumer.objectOutputStream != null) {
+                        consumer.objectOutputStream.close();
+                    }
+                    if (consumer.socket != null) {
+                        consumer.socket.close();
+                    }
+                    if (consumer.inputScanner != null) {
+                        consumer.inputScanner.close();
+                    }
+                } catch (IOException e) {
+                    System.out.println(e.getMessage());
+                }
+            }
+        }
+        for (Publisher publisher : alivePublisherConnections){
+            if (publisher.currentPort == port){
+                try {
+                    if (publisher.objectInputStream != null) {
+                        publisher.objectInputStream.close();
+                    }
+                    if (publisher.objectOutputStream != null) {
+                        publisher.objectOutputStream.close();
+                    }
+                    if (publisher.socket != null) {
+                        publisher.socket.close();
+                    }
+                    if (publisher.inputScanner != null) {
+                        publisher.inputScanner.close();
+                    }
+                } catch (IOException e) {
+                    System.out.println(e.getMessage());
+                }
+            }
+        }
+    }
+
+    protected void disconnectPublishers(){ //this disconnects userNode from all brokers as publisher
         for (Publisher pub : alivePublisherConnections) {
             try {
                 if (pub.objectInputStream != null) {
@@ -120,7 +163,7 @@ public class UserNode implements Serializable {
             }
         }
     }
-    protected void disconnectConsumers(){
+    protected void disconnectConsumers(){ //this disconnects userNode from all brokers as consumer
         for (Consumer con : aliveConsumerConnections){
             try {
                 if (con.objectInputStream != null) {
@@ -141,7 +184,7 @@ public class UserNode implements Serializable {
         }
     }
 
-    protected void disconnectAll(){
+    protected void disconnectAll(){ //this disconnects everything
         disconnectPublishers();
         disconnectConsumers();
     }
@@ -149,14 +192,11 @@ public class UserNode implements Serializable {
 
     public static void main(String[] args) { //running UserNode
 
-        Profile profile = new Profile("Mitsos");
+        Profile profile = new Profile("Kostas");
         Publisher kostaspub = new Publisher(profile);
         Consumer kostascon = new Consumer(profile);
         Thread pub = new Thread(kostaspub); //initiating both on random port
         Thread con = new Thread(kostascon);
-        //MultimediaFile upload = new MultimediaFile("C:\\Users\\kosta\\Desktop\\test.png");
-        //kostaspub.profile.addFileToProfile(upload.getFileName(),upload);
-        //above upload is working but happens twice due to second thread AUTOCHECK on publisher main run
         pub.start();
         con.start();
     }

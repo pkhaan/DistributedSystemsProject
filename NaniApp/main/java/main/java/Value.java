@@ -2,12 +2,12 @@ package main.java;
 import java.io.Serializable;
 import java.util.Arrays;
 
-public class Value implements Serializable {    //serializable object for all kinds of communication
+public class Value implements Serializable{    //serializable object for all kinds of communication
                                                 // with brokers as well as data passing
 
     private String message, topic, filename;
     private final Profile profile;
-    private final String requestType;
+    private String requestType;
     private byte[] chunk;
     private int remainingChunks;
     private final boolean fileSharing;
@@ -28,10 +28,11 @@ public class Value implements Serializable {    //serializable object for all ki
         this.fileSharing = false;
     }
 
-    public Value(String message, String chunkName, Profile profile, int remainingChunks, byte[] chunk, String requestType){
+    public Value(String message, String chunkName, Profile profile, String topic, int remainingChunks, byte[] chunk, String requestType){
         this.message = message;
         this.chunk = Arrays.copyOf(chunk,chunk.length);
         this.profile = profile;
+        this.topic = topic;
         this.remainingChunks = remainingChunks;
         this.filename = chunkName;
         this.requestType = requestType;
@@ -54,6 +55,10 @@ public class Value implements Serializable {    //serializable object for all ki
 
     public String getMessage() {
         return message;
+    }
+
+    public void setRequestType(String requestType){
+        this.requestType = requestType;
     }
 
     public boolean isFile(){

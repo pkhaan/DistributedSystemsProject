@@ -7,20 +7,22 @@ import java.io.*;
 import java.net.Socket;
 import java.util.*;
 
-public class ClientHandler implements Runnable, Serializable{
+public class ClientHandler implements Runnable,Serializable {
 
     public static ArrayList<ClientHandler> clientHandlers = new ArrayList<>();
-    public static Multimap<Profile,String> connectedPublishers = ArrayListMultimap.create();
+    public static ArrayList<ClientHandler> connectedPublishers = new ArrayList<>();
+    public static ArrayList<ClientHandler> connectedConsumers = new ArrayList<>();
+
+
+    public static Multimap<Profile,String> knownPublishers = ArrayListMultimap.create();
     public static Multimap<Profile,String> registeredConsumers = ArrayListMultimap.create();
-
-
     public static Multimap<String,Value> messagesMap = ArrayListMultimap.create();
 
 
     private Socket socket;
     private ObjectOutputStream out;
     private ObjectInputStream in;
-    private static final int CHUNK_KB_SIZE = 512 * 1024;
+    private String username;
 
 
     public ClientHandler(Socket socket){
@@ -29,6 +31,8 @@ public class ClientHandler implements Runnable, Serializable{
             this.out = new ObjectOutputStream(socket.getOutputStream());
             this.in = new ObjectInputStream(socket.getInputStream());
             clientHandlers.add(this);
+            connectedPublishers.add(this);
+            connectedConsumers.add(this);
         } catch (IOException e) {
             closeEverything(socket, out, in);
         }
@@ -43,33 +47,66 @@ public class ClientHandler implements Runnable, Serializable{
             System.out.println(streamObject);
             if(streamObject!=null){
                 if (streamObject instanceof String topic) {
-                    //------------------CHECK TOPIC HERE AND DISCONNECT IF NEEDED
-                    sendCorrectBroker(topic);
-                    Value value = (Value)readStream();
-                    System.out.println(value);
-                    if (value.getRequestType().equalsIgnoreCase("Publisher")
-                            && value.getMessage().equalsIgnoreCase("search")){  //initial Search case
-                        Profile userProfile = value.getProfile();
-                        checkPublisher(userProfile,topic);
-                    }
-                    else if (value.getRequestType().equalsIgnoreCase("Publisher")){
-                        if (!value.isFile()) { //usual data passing case
-                            messagesMap.put(topic,value);
-                        } else {
-                            messagesMap.put(topic,value);
+                    //------------------CHECK TOPIC HERE
+                    //------------------
+                    int correctPort = sendCorrectBroker(topic);
+                    if (correctPort == this.socket.getPort()){
+                        Value value = (Value) readStream();
+                        if (value != null) {
+                            if (this.username == null) { //we set the username for the client handler on first value object we receive
+                                this.username = value.getProfile().getUsername();
+                            }
+                            System.out.println(value);
+                            if (value.getRequestType().equalsIgnoreCase("Publisher")
+                                    && value.getMessage().equalsIgnoreCase("search")) {  //initial Search case
+                                Profile userProfile = value.getProfile();
+                                checkPublisher(userProfile, topic);
+                            } else if (value.getRequestType().equalsIgnoreCase("Publisher")) {
+                                if (!value.isFile()) { //usual data passing case
+                                    messagesMap.put(topic, value);
+                                    broadcastMessage(topic, value);
+                                } else {
+                                    messagesMap.put(topic, value);
+                                    broadcastFile(topic, value);
+                                }
+                            } else if (value.getRequestType().equalsIgnoreCase("Consumer")
+                                    && value.getMessage().equalsIgnoreCase("dataRequest")) { //initial case
+                                checkConsumer(value.getProfile(), value.getTopic());
+                                pull(value.getTopic());
+                            }
                         }
-                    } else if (value.getRequestType().equalsIgnoreCase("Consumer")
-                            && value.getMessage().equalsIgnoreCase("dataRequest")) { //initial case
-                            checkConsumer(value.getProfile(), value.getTopic());
-                            pull(value.getTopic());
+                    }
+                    else {
+                        System.out.println("SYSTEM: Redirecting component to broker on port: " + correctPort);
                     }
                 }
             }
         }
     }
 
+    private void broadcastFile(String topic, Value value){
+        //need to implement this
+    }
 
-    private synchronized void pull(String topic){
+    private void broadcastMessage(String topic, Value value){
+        value.setRequestType("liveMessage");
+        for (ClientHandler consumer : connectedConsumers){
+            System.out.println(this.username + " " + consumer.getUsername());
+            if (!consumer.getUsername().equalsIgnoreCase(this.username)){
+                System.out.println("Broadcasting to topic: " + topic.toUpperCase() +
+                        "for: " + this.username + " and value: " + value);
+                try {
+                    consumer.out.writeObject(value);
+                    consumer.out.flush();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
+
+    private synchronized void pull(String topic){ //main pull function
         int count = checkValueCount(topic);
         try {
             out.writeObject(count);
@@ -80,7 +117,7 @@ public class ClientHandler implements Runnable, Serializable{
         for (Map.Entry<String,Value> entry : messagesMap.entries()){
             if (entry.getKey().equalsIgnoreCase(topic)){
                 try {
-                    System.out.println("Pulling: "  + entry.getValue());
+                    System.out.println("SYSTEM: Pulling: "  + entry.getValue());
                     out.writeObject(entry.getValue());
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -89,9 +126,8 @@ public class ClientHandler implements Runnable, Serializable{
         }
     }
 
-    private synchronized int checkValueCount(String topic){
+    private synchronized int checkValueCount(String topic){ //checks how many messages we have for the specific topic
         int count = 0;
-        System.out.println("-----------" + topic);
         for (Map.Entry<String,Value> entry : messagesMap.entries()){
             if (entry.getKey().equalsIgnoreCase(topic)){
                 count++;
@@ -100,18 +136,19 @@ public class ClientHandler implements Runnable, Serializable{
         return count;
     }
 
-    private synchronized void sendCorrectBroker(String topic){
+    private synchronized int sendCorrectBroker(String topic){
         try {
-            out.writeObject(socket.getLocalPort()); //NEED TO UPDATE THIS TO CHECK FOR THE CORRECT BROKER PORT BASED
+            out.writeObject(4000); //NEED TO UPDATE THIS TO CHECK FOR THE CORRECT BROKER PORT BASED
             out.flush();
         } catch (IOException e) {
             e.printStackTrace();
         }
+        return 4000;
     }
 
     public void checkConsumer(Profile profile, String topic){
         if (!(registeredConsumers.containsEntry(profile,topic))){
-            System.out.println("New consumer registered to topic: " + topic
+            System.out.println("SYSTEM: New consumer registered to topic: " + topic
                     + " with username: " +profile.getUsername());
             registeredConsumers.put(profile, topic);
         }
@@ -119,19 +156,15 @@ public class ClientHandler implements Runnable, Serializable{
 
 
     public void checkPublisher(Profile profile, String topic){ //checks if publisher is known and adds them along with the topic
-        if (!(connectedPublishers.containsEntry(profile,topic))){
-            System.out.println("New publisher added to known Publishers for topic: " + topic
+        if (!(knownPublishers.containsEntry(profile,topic))){
+            System.out.println("SYSTEM: New publisher added to known Publishers for topic: " + topic
                     + " with username: " +profile.getUsername());
-            connectedPublishers.put(profile, topic);
+            knownPublishers.put(profile, topic);
         }
     }
 
-    public void addPublisher(Profile profile, String topic){
 
-    }
-
-
-        public synchronized Object readStream(){ //main reading object method
+    public synchronized Object readStream(){ //main reading object method
         try {
             return in.readObject();
         } catch (ClassNotFoundException | IOException e){
@@ -144,14 +177,18 @@ public class ClientHandler implements Runnable, Serializable{
 
     public void printHashMap(){
         for (Map.Entry<String,Value> entry : messagesMap.entries()){
-            System.out.println("Received in following order, topic: " + entry.getKey()
+            System.out.println("SYSTEM: Received in following order, topic: " + entry.getKey()
                     + " and value: " + entry.getValue());
         }
     }
 
+    public String getUsername(){
+        return this.username;
+    }
+
     public void removeClientHandler(){ //disconnects clients
         clientHandlers.remove(this);
-        System.out.println("A Client has left the chat!");
+        System.out.println("SYSTEM: A component has disconnected!");
     }
 
     public void closeEverything(Socket socket, ObjectOutputStream out, ObjectInputStream in){

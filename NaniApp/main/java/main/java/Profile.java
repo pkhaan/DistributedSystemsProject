@@ -10,7 +10,7 @@ import java.util.Objects;
 import java.util.Queue;
 
 
-public class Profile implements Serializable {
+public class Profile implements Serializable{
 
     private String username;
     public static Multimap<String,MultimediaFile> userMultimediaFileMap;

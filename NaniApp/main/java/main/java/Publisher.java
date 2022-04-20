@@ -5,7 +5,7 @@ import java.io.Serializable;
 import java.util.List;
 
 
-public class Publisher extends UserNode implements Runnable, Serializable {
+public class Publisher extends UserNode implements Runnable,Serializable {
 
 
     public Publisher(Profile profile){
@@ -30,25 +30,19 @@ public class Publisher extends UserNode implements Runnable, Serializable {
             System.out.println("Please give full file path: \n");
             String path = this.inputScanner.nextLine();
             MultimediaFile file = new MultimediaFile(path);
-            this.profile.addFileToProfile(file.getFileName(),file);
-            pushChunks(topic, file);
+            this.profile.addFileToProfile(file.getFileName(),file); //adding file to profile
             }
             else if(messageToSend.equalsIgnoreCase("exit")) { //exit for dc
-                disconnectAll();
+                disconnectComponents(this.currentPort);
             }
             else {
-                Value messageValue = new Value(messageToSend, this.profile ,pubRequest);
+                Value messageValue = new Value(messageToSend, this.profile ,topic, pubRequest);
                 push(topic, messageValue);
             }
-            //while taking input from clients' consoles above
-// we automatically check for new Profile file uploads from Upload queue with a new thread
-            Thread autoCheck = new Thread(() -> {
-                if (checkForNewContent()){
-                    MultimediaFile uploadedFile = getNewContent();
-                    pushChunks(topic,uploadedFile);
-                }
-            });
-            autoCheck.start();
+            if (checkForNewContent()){ //if a new file is added to profile we also push it
+                MultimediaFile uploadedFile = getNewContent();
+                pushChunks(topic,uploadedFile);
+            }
         }
     }
 
@@ -58,14 +52,14 @@ public class Publisher extends UserNode implements Runnable, Serializable {
         for (int i = 0; i < chunkList.size(); i++) { //get all byte arrays, create chunk name and value obj
             StringBuilder strB = new StringBuilder(file.getFileName());
             String chunkName = strB.insert(file.getFileName().lastIndexOf("."), String.format("_%s", i)).toString();
-            chunk = new Value("Sending file chunk", chunkName, this.profile,
+            chunk = new Value("Sending file chunk", chunkName, this.profile, topic,
                     file.getNumberOfChunks() - i - 1, chunkList.get(i), pubRequest);
             push(topic, chunk);
         }
     }
 
     public synchronized String searchTopic(){ //initial search topic function
-        String topic = consoleInput("Please enter topic: ");
+        String topic = consoleInput("Please enter publisher topic: ");
         if(!profile.checkSub(topic)){          //check if subbed
             int hash = hashTopic(topic);   //if not, hash and add to profile hashmap
             if (hash!=0){
@@ -77,17 +71,16 @@ public class Publisher extends UserNode implements Runnable, Serializable {
         try {
             push(topic, value);
             int response = (int)objectInputStream.readObject(); //asking and receiving port number for correct Broker based on the topic
-            System.out.printf("Correct broker on port: %s\n", response);
             if (response != socket.getPort()){ //if we are not connected to the right one, switch conn
+                System.out.println("SYSTEM: Switching Publisher connection to another broker on port: " + response);
                 connect(response);
             }
         } catch (IOException | ClassNotFoundException e) {
-            e.printStackTrace();
+            System.out.println(e.getMessage());
             disconnect();
         }
         return topic;
     }
-
 
 
     private boolean checkForNewContent(){

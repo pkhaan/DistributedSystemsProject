@@ -1,110 +1,64 @@
 package gr.aueb.distributedsystems.naniapp.skeletonBackend;
-
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.attribute.BasicFileAttributes;
+import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.List;
-
-public class MultimediaFile {
-
-    private String dateCreated,fileName,fileType;
-    private Path path;
-    private File multimediaFile;
-    private int numberOfChunks;
-    private static final int CHUNK_KB_SIZE = 512 * 1024;
 
 
-    public MultimediaFile(String loc){
-        this.path = Paths.get(loc);
-        this.multimediaFile = new File(loc);
-        this.fileName = multimediaFile.getName();
-        this.setData();
-        this.setFileType();
-    }
+public class MultimediaFile implements Serializable{
 
-    private void setData() { //method for file attributes to set date (or more if needed)
-        try {
-            BasicFileAttributes attr = Files.readAttributes(path, BasicFileAttributes.class);
-            this.dateCreated = String.valueOf(attr.creationTime());
-        } catch (IOException e){
-            e.printStackTrace();
-        }
-    }
+    //file of the Video
+    File file;
 
-    private void setFileType(){ //method for managing filename string and getting file extension
-        int index = this.fileName.lastIndexOf(".");
-        if (index > 0 ){
-            this.fileType = fileName.substring(index + 1);
-        }
+    //byte array data: stores the read data from FileInputStream
+    //for each chunk
+    private byte[] data;
+
+    //Metadata
+    private ArrayList<String> metadata;
+
+    //ID of this VideoFile chunk
+    private int chunkID, data_bytes;
+
+    /**
+     * Constructor
+     * @param file
+     */
+    public MultimediaFile(File file) {
+        this.file = file;
     }
 
 
-    public List<byte[]> splitInChunks(){ //method for splitting file in 512KB chunks with byte array
-        try {
-            byte[] multimediaFileByteArray = Files.readAllBytes(this.path);
-            List<byte[]> chunks = new ArrayList<>();
-            for (int i=0; i < multimediaFileByteArray.length;){
-                byte[] chunk = new byte[Math.min(CHUNK_KB_SIZE, multimediaFileByteArray.length - i)];
-                for (int j=0; j < chunk.length; j++,i++){
-                    chunk[j] = multimediaFileByteArray[i];
-                }
-                chunks.add(chunk);
-                this.increaseNumberOfChunks();
-            }
-            return chunks;
-        } catch (IOException e){
-            e.printStackTrace();
-        }
-        return null;
+    /**
+     * Constructor for chunk
+     * @param data
+     * @param metadata
+     * @param chunkID
+     * @param data_bytes
+     */
+
+    public MultimediaFile(byte[] data, ArrayList<String> metadata, int chunkID, int data_bytes) {
+        this.data = data;
+        this.metadata = metadata;
+        this.chunkID = chunkID;
+        this.data_bytes = data_bytes;
     }
 
-    public byte[] getBytes(){
-        return this.fileName.getBytes();
+    /**
+     * GETTERS OF DATA
+     * @return
+     */
+    public File getFile() {
+        return file;
     }
 
-    public String getFileName(){
-        return this.fileName;
+    public byte[] getData() {
+        return data;
     }
 
-    private String getFileType(){
-        return this.fileType;
+    public int getChunkID() {
+        return chunkID;
     }
 
-    public String getDateCreated(){
-        return this.dateCreated;
-    }
 
-    public File getMultimediaFile(){
-        return this.multimediaFile;
-    }
 
-    public Path getPath(){
-        return this.path;
-    }
-
-    public void setFileName(String fileName){
-        this.fileName = fileName;
-    }
-
-    public void setDateCreated(String date){
-        this.dateCreated = date;
-    }
-
-    public void setMultimediaFile(File file){
-        this.multimediaFile = file;
-    }
-
-    public void setPath(Path path){
-        this.path = path;
-    }
-
-    public void setNumberOfChunks(int numberOfChunks){ this.numberOfChunks = numberOfChunks; }
-
-    public void increaseNumberOfChunks(){this.numberOfChunks++;}
-
-    public int getNumberOfChunks(){return this.numberOfChunks;}
 }

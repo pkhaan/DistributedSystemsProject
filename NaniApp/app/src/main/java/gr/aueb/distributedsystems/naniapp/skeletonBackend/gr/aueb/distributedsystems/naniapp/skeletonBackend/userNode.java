@@ -132,7 +132,7 @@ public class userNode extends gr.aueb.distributedsystems.naniapp.skeletonBackend
     }
     }
 
-    public synchronized void uploadVideo(String directory, ArrayList<String> hashtags) {
+    public synchronized void uploadMedia(String directory, ArrayList<String> hashtags) {
 
         File videoFile = new File(directory);
 
@@ -165,7 +165,7 @@ public class userNode extends gr.aueb.distributedsystems.naniapp.skeletonBackend
 
     }
 
-
+    public synchronized void delete
 
 
 

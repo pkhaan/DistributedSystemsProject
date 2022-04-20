@@ -22,24 +22,59 @@ public class DataKeeper implements Serializable{
 
     private HashMap<Address, ArrayList<String>> topicsToBrokers = new HashMap<>();
 
-    private ArrayList<String> Topics = new ArrayList<>();
+    /*Stores the hash ID of the broker address
+    into the hashing function
+     */
+
+    private HashMap<Address, BigInteger> hashIdBroker = new HashMap<>();
+
+
+   /*List of topics for the mentioned
+   publisher each time the fun is called
+    */
+    private HashMap<userNode, ArrayList<String>> availablePublishers = new HashMap<>();
+
+    //Multimedia Fiels
+    private HashMap<String, ArrayList<File>> topicsMultimediaFiles = new HashMap<>();
+
+    private ArrayList<String> availableTopics = new ArrayList<>();
+
+
+    public DataKeeper() {
+    }
+
+
+    public synchronized HashMap<Address, ArrayList<String>> getTopicsAssociatedWithBrokers() {
+
+        return topicsToBrokers;
+    }
+
+    public synchronized ArrayList<String> getAvailableTopics() {
+        return availableTopics;
+    }
+
+    public synchronized HashMap<Address, BigInteger> getHashingIDAssociatedWithBrokers() {
+        return hashIdBroker;
+    }
+
+    public synchronized HashMap<userNode, ArrayList<String>> getAvailablePublishers() {
+        return availablePublishers;
+    }
+
+   // public synchronized HashMap<String, ArrayList<File>> getAllVideosByTopic() {
+       // return allVideosByTopic;
+    //}
 
 
 
+    public synchronized HashMap<Address, ArrayList<String>> getTopicsToBrokers() {
+        return topicsToBrokers;
+    }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
+    public synchronized HashMap<Address, ArrayList<String>> getHashIdBroker() {
+        return hashIdBroker;
+    }
 
 
 

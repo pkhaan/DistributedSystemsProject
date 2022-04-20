@@ -2,6 +2,8 @@
 //package main.gr.aueb.distributedsystems.naniapp.skeletonBackend;
 package gr.aueb.distributedsystems.naniapp.skeletonBackend;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -76,11 +78,11 @@ public class userNode extends gr.aueb.distributedsystems.naniapp.skeletonBackend
         return subscribedTopics;
     }
 
-    public boolean compare(viaNode viaNode) {
+    public boolean compare(userNode UserNode) {
         return this.getAddress().compare(viaNode.getAddress());
     }
 
-    public synchronized void downloadVideo (File video) throws IOException {
+    public synchronized void downloadVideo (@NotNull File video) throws IOException {
 
         ObjectOutputStream out = null;
         ObjectInputStream in = null;
@@ -130,14 +132,36 @@ public class userNode extends gr.aueb.distributedsystems.naniapp.skeletonBackend
     }
     }
 
+    public synchronized void uploadVideo(String directory, ArrayList<String> hashtags) {
+
+        File videoFile = new File(directory);
 
 
+        if (getChannel().getAllVideosPublished().contains(videoFile)) {
+            System.out.println("[Broker()]:Video has been uploaded. Please check again if you want to upload another one");
+            return;
+        }
 
 
+        HashMap<String, ArrayList<File>> userVideosByHashtag = getChannel().getUserVideosByHashtag();
+        if (hashtags == null) hashtags = new ArrayList<>();
+        for (String hashtag : hashtags) {
+            if (!getChannel().getAllHashtagsPublished().contains(hashtag)) {
+                getChannel().getAllHashtagsPublished().add(hashtag);
+            }
+            if (userVideosByHashtag.containsKey(hashtag)) {
+                ArrayList<File> videosByHashtag = userVideosByHashtag.get(hashtag);
+                videosByHashtag.add(videoFile);
+            } else {
+                ArrayList<File> videosByHashtag = new ArrayList<>();
+                videosByHashtag.add(videoFile);
+                userVideosByHashtag.put(hashtag, videosByHashtag);
+            }
+        }
+        getChannel().getAllVideosPublished().add(videoFile);
+        getChannel().getUserHashtagsPerVideo().put(videoFile, hashtags);
 
-
-
-
+    }
 
     }
 

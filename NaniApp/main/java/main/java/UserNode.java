@@ -3,6 +3,7 @@ package main.java;
 import java.io.*;
 import java.net.Socket;
 import java.util.*;
+import static java.lang.Integer.parseInt;
 
 public class UserNode implements Serializable {
 
@@ -11,20 +12,20 @@ public class UserNode implements Serializable {
     protected int currentPort;
     protected final String pubRequest = "Publisher";
     protected final String conRequest = "Consumer";
-    protected final String downloadPath = "C:\\Users\\kosta\\Desktop\\DownloadedContent\\";
+    protected final String downloadPath = System.getProperty("user.dir")
+            .concat("\\DownloadedContent\\");
 
     protected ObjectOutputStream objectOutputStream;
     protected ObjectInputStream objectInputStream;
     protected Scanner inputScanner;
 
-    protected static final int[] portList = new int[]{3000,4000,5000};
-    private HashMap<Integer,String> portsAndAddresses; //ports and addresses
-    private HashMap<Integer,HashMap<Integer,String>> availableBrokers; //ids, ports and addresses
-    private HashMap<Integer,String> hashTopics; //hash and topics
+    private static final int[] portNumbers = new int[]{3000,4000,5000};
+    private static HashMap<Integer,String> portsAndAddresses = new HashMap<>(); //ports and addresses
+    private static HashMap<Integer,Integer> availableBrokers =  new HashMap<>(); //ids, ports
+    private static List<String> availableTopics = new ArrayList<>();
 
-
-    protected static ArrayList<Publisher> alivePublisherConnections;
-    protected static ArrayList<Consumer> aliveConsumerConnections;
+    protected ArrayList<Publisher> alivePublisherConnections;
+    protected ArrayList<Consumer> aliveConsumerConnections;
 
 
     public UserNode(){
@@ -38,12 +39,15 @@ public class UserNode implements Serializable {
     public UserNode(int port, Profile profile) { //user node initialization
         this.currentPort = port;
         this.profile = profile;
+        readConfig(System.getProperty("user.dir").concat("\\src\\main\\java\\main\\java\\config.txt"));
         alivePublisherConnections = new ArrayList<>();
         aliveConsumerConnections = new ArrayList<>();
     }
 
     private static int getRandomSocketPort(){ //generates a random port for initial communication with a random Broker
-        return portList[new Random().nextInt(portList.length)];
+
+        return portNumbers[new Random().nextInt(portNumbers.length)];
+
     }
 
 
@@ -187,10 +191,33 @@ public class UserNode implements Serializable {
         disconnectConsumers();
     }
 
+    private void readConfig(String path){ //reading ports, hostnames and topics from config file
+        File file = new File(path); //same method on both brokers and user node
+        try {
+            Scanner reader = new Scanner(file);
+            reader.useDelimiter(",");
+            String id, hostname, port;
+            id = reader.next();
+            while(reader.hasNext() && !id.equalsIgnoreCase("#")){
+                hostname = reader.next();
+                port = reader.next();
+                portsAndAddresses.put(parseInt(port),hostname);
+                availableBrokers.put(parseInt(id),parseInt(port));
+                id = reader.next();
+            }
+            while(reader.hasNext()){
+                String topic = reader.next();
+                availableTopics.add(topic);
+            }
+        } catch (FileNotFoundException e){
+            System.out.println(e.getMessage());
+        }
+    }
+
 
     public static void main(String[] args) { //running UserNode
 
-        Profile profile = new Profile("Mitsos");
+        Profile profile = new Profile("Nikolas");
         Publisher kostaspub = new Publisher(profile);
         Consumer kostascon = new Consumer(profile);
         Thread pub = new Thread(kostaspub); //initiating both on random port

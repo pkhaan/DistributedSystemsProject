@@ -2,7 +2,6 @@ package main.java;
 
 import java.io.IOException;
 import java.io.Serializable;
-import java.nio.file.NoSuchFileException;
 import java.util.List;
 
 
@@ -62,11 +61,8 @@ public class Publisher extends UserNode implements Runnable,Serializable {
     public synchronized String searchTopic(){ //initial search topic function
         String topic = consoleInput("Please enter publisher topic: ");
         if(!profile.checkSub(topic)){          //check if subbed
-            int hash = hashTopic(topic);   //if not, hash and add to profile hashmap
-            if (hash!=0){
-                profile.sub(hash,topic); //we sub to the topic as well
-                System.out.printf("Subbed to topic:%s with hash:%s %n\n", topic, hash);
-            }
+            profile.sub(topic); //we sub to the topic as well
+            System.out.printf("Subbed to topic:%s %n\n", topic);
         }
         Value value = new Value("search", this.profile, pubRequest);
         try {
@@ -91,11 +87,6 @@ public class Publisher extends UserNode implements Runnable,Serializable {
 
     private MultimediaFile getNewContent(){ //gets first item in upload Q
         return this.profile.getFileFromUploadQueue();
-    }
-
-
-    public int hashTopic(String topic){ //hash topic
-        return topic.hashCode();
     }
 
 

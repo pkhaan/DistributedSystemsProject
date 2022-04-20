@@ -48,9 +48,8 @@ public class ClientHandler implements Runnable,Serializable {
             System.out.println(streamObject);
             if(streamObject!=null){
                 if (streamObject instanceof String topic) {
-                    //------------------CHECK TOPIC HERE
-                    //------------------
-                    int correctPort = sendCorrectBroker(topic);
+                    int correctPort = Broker.searchBroker(topic);
+                    sendCorrectBroker(correctPort);
                     if (correctPort == this.socket.getLocalPort()){
                         Value value = (Value) readStream();
                         if (value != null) {
@@ -82,6 +81,15 @@ public class ClientHandler implements Runnable,Serializable {
                     }
                 }
             }
+        }
+    }
+
+    private synchronized void sendCorrectBroker(int port){
+        try {
+            out.writeObject(port); //NEED TO UPDATE THIS TO CHECK FOR THE CORRECT BROKER PORT BASED
+            out.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
@@ -135,16 +143,6 @@ public class ClientHandler implements Runnable,Serializable {
             }
         }
         return count;
-    }
-
-    private synchronized int sendCorrectBroker(String topic){
-        try {
-            out.writeObject(3000); //NEED TO UPDATE THIS TO CHECK FOR THE CORRECT BROKER PORT BASED
-            out.flush();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return 3000;
     }
 
     public void checkConsumer(Profile profile, String topic){

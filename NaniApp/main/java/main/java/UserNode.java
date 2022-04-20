@@ -2,10 +2,7 @@ package main.java;
 
 import java.io.*;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Random;
-import java.util.Scanner;
+import java.util.*;
 
 public class UserNode implements Serializable {
 
@@ -20,9 +17,10 @@ public class UserNode implements Serializable {
     protected ObjectInputStream objectInputStream;
     protected Scanner inputScanner;
 
-    protected static final int[] portList = new int[]{3000};
-    protected static ArrayList<String> topicList = new ArrayList<>(
-            Arrays.asList("DS1", "DS2", "DS3"));
+    protected static final int[] portList = new int[]{3000,4000,5000};
+    private HashMap<Integer,String> portsAndAddresses; //ports and addresses
+    private HashMap<Integer,HashMap<Integer,String>> availableBrokers; //ids, ports and addresses
+    private HashMap<Integer,String> hashTopics; //hash and topics
 
 
     protected static ArrayList<Publisher> alivePublisherConnections;
@@ -72,7 +70,7 @@ public class UserNode implements Serializable {
 
     protected void connect(int port){
         try{
-            this.socket = new Socket("localhost", port);
+            this.socket = new Socket( "localhost", port);
             this.objectOutputStream = new ObjectOutputStream(socket.getOutputStream());
             this.objectInputStream = new ObjectInputStream(socket.getInputStream());
             this.inputScanner = new Scanner(System.in);
@@ -192,7 +190,7 @@ public class UserNode implements Serializable {
 
     public static void main(String[] args) { //running UserNode
 
-        Profile profile = new Profile("Kostas");
+        Profile profile = new Profile("Mitsos");
         Publisher kostaspub = new Publisher(profile);
         Consumer kostascon = new Consumer(profile);
         Thread pub = new Thread(kostaspub); //initiating both on random port

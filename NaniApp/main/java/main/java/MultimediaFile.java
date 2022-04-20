@@ -32,7 +32,7 @@ public class MultimediaFile implements Serializable {
             BasicFileAttributes attr = Files.readAttributes(path, BasicFileAttributes.class);
             this.dateCreated = String.valueOf(attr.creationTime());
         } catch (IOException e){
-            e.printStackTrace();
+            System.out.println("Incorrect filepath.");
         }
     }
 

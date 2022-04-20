@@ -1,6 +1,7 @@
 package main.java;
 
 import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.LinkedListMultimap;
 import com.google.common.collect.Multimap;
 
 import java.io.*;
@@ -16,7 +17,7 @@ public class ClientHandler implements Runnable,Serializable {
 
     public static Multimap<Profile,String> knownPublishers = ArrayListMultimap.create();
     public static Multimap<Profile,String> registeredConsumers = ArrayListMultimap.create();
-    public static Multimap<String,Value> messagesMap = ArrayListMultimap.create();
+    public static Multimap<String,Value> messagesMap = LinkedListMultimap.create();
 
 
     private Socket socket;
@@ -50,7 +51,7 @@ public class ClientHandler implements Runnable,Serializable {
                     //------------------CHECK TOPIC HERE
                     //------------------
                     int correctPort = sendCorrectBroker(topic);
-                    if (correctPort == this.socket.getPort()){
+                    if (correctPort == this.socket.getLocalPort()){
                         Value value = (Value) readStream();
                         if (value != null) {
                             if (this.username == null) { //we set the username for the client handler on first value object we receive
@@ -63,11 +64,11 @@ public class ClientHandler implements Runnable,Serializable {
                                 checkPublisher(userProfile, topic);
                             } else if (value.getRequestType().equalsIgnoreCase("Publisher")) {
                                 if (!value.isFile()) { //usual data passing case
-                                    messagesMap.put(topic, value);
-                                    broadcastMessage(topic, value);
+                                    messagesMap.put(topic,value);
+                                    broadcastMessage(topic,value);
                                 } else {
-                                    messagesMap.put(topic, value);
-                                    broadcastFile(topic, value);
+                                    messagesMap.put(topic,value);
+                                    broadcastFile(topic,value);
                                 }
                             } else if (value.getRequestType().equalsIgnoreCase("Consumer")
                                     && value.getMessage().equalsIgnoreCase("dataRequest")) { //initial case
@@ -138,12 +139,12 @@ public class ClientHandler implements Runnable,Serializable {
 
     private synchronized int sendCorrectBroker(String topic){
         try {
-            out.writeObject(4000); //NEED TO UPDATE THIS TO CHECK FOR THE CORRECT BROKER PORT BASED
+            out.writeObject(3000); //NEED TO UPDATE THIS TO CHECK FOR THE CORRECT BROKER PORT BASED
             out.flush();
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return 4000;
+        return 3000;
     }
 
     public void checkConsumer(Profile profile, String topic){

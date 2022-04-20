@@ -11,7 +11,8 @@ public class Broker implements Serializable {
 
     private HashMap<Integer,String> portsAndAddresses; //ports and addresses
     private HashMap<Integer,HashMap<Integer,String>> availableBrokers; //ids, ports and addresses
-    private HashMap<Integer,String> availableTopics; //hash and topics
+    private HashMap<Integer,String> hashTopics; //hash and topics
+    private HashMap<Integer,Integer> hashedTopicsToBrokers; //topic hashes their corresponding Broker
 
     private final ServerSocket serverSocket;
 
@@ -68,19 +69,16 @@ public class Broker implements Serializable {
         return this.id;
     }
 
-    public void retrieveBrokers(){
-        //from config file
+    private void readConfigurationFile(String file){
+        //read config to retrieve all relevant information regarding brokers and topics and then assign topics to brokers
     }
 
-    public void retrieveTopics(){
-        //from config file
-    }
 
 
     public static void main(String[] args) throws IOException {
 
         ServerSocket serverSocket = new ServerSocket(4000);
-        Broker broker = new Broker(serverSocket, InetAddress.getByName("localhost"), 1);
+        Broker broker = new Broker(serverSocket, InetAddress.getByName("localhost"), 2);
         System.out.println("SYSTEM: Broker_" + broker.getBrokerID()+" connected at: " + serverSocket + "with address: " +  broker.getBrokerAddress()
         + " and hashcode: " + broker.getBrokerHash());
         broker.startBroker();

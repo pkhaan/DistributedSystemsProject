@@ -28,24 +28,25 @@ public class Consumer extends UserNode implements Runnable,Serializable {
         System.out.println("Consumer established connection with Broker on port: " + this.socket.getPort());
         String topic = consoleInput("Please enter consumer topic: ");
         if (topic != null) {
-            int response = checkBroker(topic);
-            if (response != socket.getPort()) {
-                System.out.println("SYSTEM: Switching Consumer connection to another broker on port: " + response);
-                connect(response);
-            } else {
-                List<Value> data = getConversationData(topic); //getting conversation data at first
-                List<Value> chunkList = new ArrayList<>();
-                for (Value message : data) {
-                    if (message.isFile()) {
-                        chunkList.add(message);
-                        writeFiles(chunkList);
-                    } else {
-                        System.out.println(message.getProfile().getUsername() + ": " + message.getMessage());
-                    }
+            while (true){
+                int response = checkBroker(topic);
+                if (response != socket.getPort()) {
+                    System.out.println("SYSTEM: Switching Consumer connection to another broker on port: " + response);
+                    connect(response);
+                } else break;
+            }
+            List<Value> data = getConversationData(topic); //getting conversation data at first
+            List<Value> chunkList = new ArrayList<>();
+            for (Value message : data) {
+                if (message.isFile()) {
+                    chunkList.add(message);
+                    writeFiles(chunkList);
+                } else {
+                    System.out.println(message.getProfile().getUsername() + ": " + message.getMessage());
                 }
-                while (!socket.isClosed()) {
-                    listenForMessage(); //listening for messages
-                }
+            }
+            while (!socket.isClosed()) {
+                listenForMessage(); //listening for messages
             }
         }
     }

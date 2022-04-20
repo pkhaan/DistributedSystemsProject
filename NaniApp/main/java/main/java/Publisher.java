@@ -2,6 +2,7 @@ package main.java;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.nio.file.NoSuchFileException;
 import java.util.List;
 
 
@@ -74,6 +75,7 @@ public class Publisher extends UserNode implements Runnable,Serializable {
             if (response != socket.getPort()){ //if we are not connected to the right one, switch conn
                 System.out.println("SYSTEM: Switching Publisher connection to another broker on port: " + response);
                 connect(response);
+                push(topic, value);
             }
         } catch (IOException | ClassNotFoundException e) {
             System.out.println(e.getMessage());

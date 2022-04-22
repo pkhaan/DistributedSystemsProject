@@ -4,23 +4,23 @@ import java.io.Serializable;
 public class Address implements Serializable {
 
     //the port that the device listens to
-    private int port;
+    private int PORT;
 
     //ip address of device
-    private String ip;
+    private String IP;
 
     public Address(String ip,int port) {
-        this.port = port;
-        this.ip = ip;
+        this.port = PORT;
+        this.ip = IP;
     }
 
 //ACESSORS METHODS FOR USEABILITY
     public int getPort() {
-        return port;
+        return PORT;
     }
 
     public String getIp() {
-        return ip;
+        return IP;
     }
 //Corelletion to see if we have the same port and same ip
     public boolean compare(Address address){
@@ -30,7 +30,7 @@ public class Address implements Serializable {
 
     @Override
     public String toString() {
-        return "Port: " + this.port + " IP: " + this.ip;
+        return "Port: " + this.PORT + " IP: " + this.IP;
     }
 
 

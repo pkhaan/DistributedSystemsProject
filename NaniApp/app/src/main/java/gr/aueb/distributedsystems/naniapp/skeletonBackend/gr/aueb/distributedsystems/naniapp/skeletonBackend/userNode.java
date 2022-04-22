@@ -1,5 +1,4 @@
 
-//package main.gr.aueb.distributedsystems.naniapp.skeletonBackend;
 package gr.aueb.distributedsystems.naniapp.skeletonBackend;
 
 import org.jetbrains.annotations.NotNull;
@@ -45,7 +44,7 @@ public class userNode extends gr.aueb.distributedsystems.naniapp.skeletonBackend
         return address;
     }
 
-    public dataKeeper getDataKeeper() {
+    public DataKeeper getDataKeeper() {
         return dataKeeper;
     }
 
@@ -79,7 +78,7 @@ public class userNode extends gr.aueb.distributedsystems.naniapp.skeletonBackend
     }
 
     public boolean compare(userNode UserNode) {
-        return this.getAddress().compare(viaNode.getAddress());
+        return this.getAddress().compare(userNode.getAddress());
     }
 
     public synchronized void downloadVideo (@NotNull File video) throws IOException {
@@ -97,16 +96,16 @@ public class userNode extends gr.aueb.distributedsystems.naniapp.skeletonBackend
         userNodeRequestSocket =  new Socket(connectedBroker.getIp(), connectedBroker.getPort());
         String videoAdded = video.getPath();
         videoAdded = videoAdded.substring (videoAdded.indexOf("$") + 1, videoAdded.lastIndexOf("$")) + "-" + videoAdded.substring(videoAdded.lastIndexOf("$")+1);
-        out.writeObject(new VideoFile(video));
+        out.writeObject(new MultimediaFile(media));
         out.flush();
         System.out.println(in.readObject());
         out.writeObject(this);
         out.flush();
-        ArrayList<VideoFile> chunks = new ArrayList<>();
+        ArrayList<MultimediaFile> chunks = new ArrayList<>();
         while (true) {
             Object response = in.readObject();
             if (response.equals("NO MORE CHUNKS")) break;
-            chunks.add((VideoFile) response);
+            chunks.add((MultimediaFile) response);
             System.out.println("Received chunk");
             out.writeObject("RECEIVED");
             out.flush();
@@ -119,10 +118,10 @@ public class userNode extends gr.aueb.distributedsystems.naniapp.skeletonBackend
         userNodeRequestSocket.close();
 
         //String videoPath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getAbsolutePath();
-        System.out.println(videoPath + videoChosen.toLowerCase() + ".mp4");
-        FileOutputStream fos = new FileOutputStream(videoPath + videoChosen.toLowerCase() + ".mp4");
+        System.out.println(mediaPath + mediaChosen.toLowerCase() + ".mp4");
+        FileOutputStream fos = new FileOutputStream(mediaPath + mediaChosen.toLowerCase() + ".mp4");
         int i = 0;
-        for (VideoFile chunk : chunks) {
+        for (MultimediaFile chunk : chunks) {
             i++;
             fos.write(chunk.getData());
         }
@@ -150,8 +149,8 @@ public class userNode extends gr.aueb.distributedsystems.naniapp.skeletonBackend
                 getChannel().getAllHashtagsPublished().add(hashtag);
             }
             if (userVideosByHashtag.containsKey(hashtag)) {
-                ArrayList<File> videosByHashtag = userVideosByHashtag.get(hashtag);
-                videosByHashtag.add(videoFile);
+                ArrayList<File> mediaFilesByHashtag = userMediaFilesByHashtag.get(hashtag);
+                mediaFilesByHashtag.add(mediaFile);
             } else {
                 ArrayList<File> videosByHashtag = new ArrayList<>();
                 videosByHashtag.add(videoFile);

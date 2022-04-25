@@ -1,5 +1,6 @@
 package main.java;
 import java.io.Serializable;
+import java.lang.reflect.Field;
 import java.util.Arrays;
 
 public class Value implements Serializable{    //serializable object for all kinds of communication
@@ -7,7 +8,7 @@ public class Value implements Serializable{    //serializable object for all kin
 
     private String message, topic, filename;
     private final Profile profile;
-    private String requestType;
+    private String requestType, fileID;
     private byte[] chunk;
     private int remainingChunks;
     private final boolean fileSharing;
@@ -28,11 +29,12 @@ public class Value implements Serializable{    //serializable object for all kin
         this.fileSharing = false;
     }
 
-    public Value(String message, String chunkName, Profile profile, String topic, int remainingChunks, byte[] chunk, String requestType){
+    public Value(String message, String chunkName, Profile profile, String topic, String fileID, int remainingChunks, byte[] chunk, String requestType){
         this.message = message;
         this.chunk = Arrays.copyOf(chunk,chunk.length);
         this.profile = profile;
         this.topic = topic;
+        this.fileID = fileID;
         this.remainingChunks = remainingChunks;
         this.filename = chunkName;
         this.requestType = requestType;
@@ -40,16 +42,24 @@ public class Value implements Serializable{    //serializable object for all kin
     }
 
 
-    @Override //toString override for printing non data sharing attr of our custom object
-    public String toString() {
-        return "Value{" +
-                "message='" + message + '\'' +
-                ", fileName='" + filename + '\'' +
-                ", profileName='" + profile.getUsername() + '\'' +
-                ", number of remaining Chunks='" + remainingChunks + '\'' +
-                ", topic='" + topic + '\'' +
-                ", request type: '" + requestType + '\'' +
-                '}';
+    @Override //toString override for printing value objects
+    public String toString() { //prints all non-null fields
+        String string = "Value: {";
+        Class<? extends Value> c = this.getClass();
+        Field[] fields = c.getDeclaredFields();
+        for(Field field : fields){
+            field.setAccessible(true);
+            try {
+                Object value = field.get(this);
+                if (value != null) {
+                    string = string.concat(field.getName() + "=" + value + ", ");
+                }
+            } catch (IllegalAccessException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        string = string.concat("}");
+        return string;
     }
 
 
@@ -85,6 +95,12 @@ public class Value implements Serializable{    //serializable object for all kin
 
     public String getFilename(){
         return this.filename;
+    }
+
+    public String getFileID(){return this.fileID;}
+
+    public void setFilename(String filename){
+        this.filename = filename;
     }
 
     public void setChunk(byte[] chunk) {

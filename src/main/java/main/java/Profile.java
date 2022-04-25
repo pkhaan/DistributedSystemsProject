@@ -1,5 +1,6 @@
 package main.java;
 
+import com.google.common.base.Objects;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 
@@ -68,12 +69,11 @@ public class Profile implements Serializable{
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Profile profile = (Profile) o;
-        return Objects.equals(username, profile.username) && Objects.equals(pendingUpload, profile.pendingUpload)
-                && Objects.equals(userSubscribedConversations, profile.userSubscribedConversations);
+        return Objects.equal(username, profile.username);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(username, pendingUpload, userSubscribedConversations);
+        return Objects.hashCode(username);
     }
 }

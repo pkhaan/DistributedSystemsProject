@@ -19,10 +19,10 @@ public class UserNode implements Serializable {
     protected ObjectInputStream objectInputStream;
     protected Scanner inputScanner;
 
-    private static final int[] portNumbers = new int[]{3000,4000,5000};
-    private static HashMap<Integer,String> portsAndAddresses = new HashMap<>(); //ports and addresses
-    private static HashMap<Integer,Integer> availableBrokers =  new HashMap<>(); //ids, ports
-    private static List<String> availableTopics = new ArrayList<>();
+    protected static final int[] portNumbers = new int[]{3000,4000,5000};
+    protected static HashMap<Integer,String> portsAndAddresses = new HashMap<>(); //ports and addresses
+    protected static HashMap<Integer,Integer> availableBrokers =  new HashMap<>(); //ids, ports
+    protected static List<String> availableTopics = new ArrayList<>();
 
     protected ArrayList<Publisher> alivePublisherConnections;
     protected ArrayList<Consumer> aliveConsumerConnections;
@@ -39,7 +39,6 @@ public class UserNode implements Serializable {
     public UserNode(int port, Profile profile) { //user node initialization
         this.currentPort = port;
         this.profile = profile;
-        readConfig(System.getProperty("user.dir").concat("\\src\\main\\java\\main\\java\\config.txt"));
         alivePublisherConnections = new ArrayList<>();
         aliveConsumerConnections = new ArrayList<>();
     }
@@ -49,13 +48,11 @@ public class UserNode implements Serializable {
         return portNumbers[new Random().nextInt(portNumbers.length)];
 
     }
-
-
     private static Profile createProfile(){ //creates a noUsername empty profile
         return new Profile("NoUsername");
     } //creates a noUsername prof
 
-    protected synchronized String consoleInput(String message){
+    protected String consoleInput(String message){
         System.out.println(message);
         String input = null;
         if (this.inputScanner.hasNextLine()) {
@@ -64,7 +61,7 @@ public class UserNode implements Serializable {
         return input;
     }
 
-    protected synchronized String consoleInput(){
+    protected String consoleInput(){
         String input = null;
         if (this.inputScanner.hasNextLine()) {
             input = this.inputScanner.nextLine();
@@ -72,14 +69,24 @@ public class UserNode implements Serializable {
         return input;
     }
 
-    protected void connect(int port){
+    protected void connect(int port, String type){
         try{
             this.socket = new Socket( "localhost", port);
             this.objectOutputStream = new ObjectOutputStream(socket.getOutputStream());
             this.objectInputStream = new ObjectInputStream(socket.getInputStream());
             this.inputScanner = new Scanner(System.in);
+            try { //initial connection request for both publisher and consumer
+                Value initMessage = new Value("Connection", this.profile, type);
+                objectOutputStream.writeObject(initMessage);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
         } catch (IOException e) {
-            disconnect();
+            if (e.getMessage().equalsIgnoreCase("Connection refused: connect")){
+                System.out.println( type + " connection failed. Broker at port: "
+                        + port + " is currently unavailable.");
+                disconnectAll();
+            }
         }
     }
 
@@ -191,7 +198,7 @@ public class UserNode implements Serializable {
         disconnectConsumers();
     }
 
-    private void readConfig(String path){ //reading ports, hostnames and topics from config file
+    private static void readConfig(String path){ //reading ports, hostnames and topics from config file
         File file = new File(path); //same method on both brokers and user node
         try {
             Scanner reader = new Scanner(file);
@@ -214,10 +221,10 @@ public class UserNode implements Serializable {
         }
     }
 
-
     public static void main(String[] args) { //running UserNode
 
-        Profile profile = new Profile("Nikolas");
+        UserNode.readConfig(System.getProperty("user.dir").concat("\\src\\main\\java\\main\\java\\config.txt"));
+        Profile profile = new Profile("AFSDAFDS");
         Publisher kostaspub = new Publisher(profile);
         Consumer kostascon = new Consumer(profile);
         Thread pub = new Thread(kostaspub); //initiating both on random port

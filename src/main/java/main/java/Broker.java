@@ -12,11 +12,11 @@ public class Broker implements Serializable {
     private final int id;
     private final InetAddress address;
 
-    private static HashMap<Integer,String> portsAndAddresses = new HashMap<>(); //ports and addresses
-    private static HashMap<Integer,Integer> availableBrokers =  new HashMap<>(); //ids, ports
-    private static HashMap<BigInteger,String> hashedTopics = new HashMap<>();//hash and topics
-    private static HashMap<String,Integer> topicsToBrokers = new HashMap<>(); //topic and broker ids
-    private static List<String> availableTopics = new ArrayList<>();
+    private static final HashMap<Integer,String> portsAndAddresses = new HashMap<>(); //ports and addresses
+    private static final HashMap<Integer,Integer> availableBrokers =  new HashMap<>(); //ids, ports
+    private static final HashMap<BigInteger,String> hashedTopics = new HashMap<>();//hash and topics
+    private static final HashMap<String,Integer> topicsToBrokers = new HashMap<>(); //topic and broker ids
+    private static final List<String> availableTopics = new ArrayList<>();
 
     private final ServerSocket serverSocket;
 
@@ -71,7 +71,7 @@ public class Broker implements Serializable {
         File file = new File(path); //same method on both brokers and user node
         try {
             Scanner reader = new Scanner(file);
-            reader.useDelimiter(",");
+            reader.useDelimiter(","); // comma as delimiter
             String id, hostname, port;
             id = reader.next();
             while(reader.hasNext() && !id.equalsIgnoreCase("#")){
@@ -90,8 +90,6 @@ public class Broker implements Serializable {
         }
     }
 
-    //public int getBrokerHash(){}
-
     private static void hashTopics(){ //hashing topics with SHA-1 and getting their decimal value
         for (String topic : availableTopics){
             BigInteger hash = new BigInteger(encryptThisString(topic),16);
@@ -103,7 +101,7 @@ public class Broker implements Serializable {
         for (Map.Entry<BigInteger, String> entry : hashedTopics.entrySet()){
             topicsToBrokers.put(entry.getValue(), entry.getKey().mod(BigInteger.valueOf(3)).intValue());
         }
-        System.out.println(topicsToBrokers);
+        System.out.println("Topics to Brokers: " + topicsToBrokers);
     }
 
     public static String encryptThisString(String input){ //SHA-1 encryption method
@@ -137,12 +135,10 @@ public class Broker implements Serializable {
         return port;
     }
 
-
-
     public static void main(String[] args) throws IOException {
 
-        ServerSocket serverSocket = new ServerSocket(5000);
-        Broker broker = new Broker(serverSocket, InetAddress.getByName("127.0.0.1"), 3);
+        ServerSocket serverSocket = new ServerSocket(5000); //port numbers 3000/4000/5000
+        Broker broker = new Broker(serverSocket, InetAddress.getByName("127.0.0.1"), 2); //with IDs 0/1/2 respectively
         System.out.println("SYSTEM: Broker_" + broker.getBrokerID()+" initialized at: "
                 + serverSocket + "with address: " +  broker.getBrokerAddress());
         broker.startBroker();

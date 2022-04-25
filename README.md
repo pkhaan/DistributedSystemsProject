@@ -37,8 +37,8 @@ different components.
 - Type "file" to initiate file upload. The file is also being uploaded to user's profile and shared to the live topic conversation
 - Type "exit" to disconnect current user (both consumer and publisher)
 
-3. Chat history is also implemented. When initially connecting to the broker, 
-any user is being sent the chat history along with the files shared. Files shared are being downloaded automatically.
+3. Chat history is also implemented. Any user (consumer), when initially connecting to the broker, 
+is being sent the chat history along with the files shared. Files shared are being downloaded automatically.
 
 Note that download folder is hardcoded to:
 USERDIR\DownloadedContent\

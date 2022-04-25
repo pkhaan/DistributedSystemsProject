@@ -18,7 +18,7 @@ _This is a repository regarding the assignment of Distributed Systems Course in 
 
 
 
-### RUN INSTRUCTIONS
+## RUN INSTRUCTIONS
 
 Backend of event delivery system is implemented with some additions via console for both debugging reasons and examination.
 - 3x Broker main run with: 
@@ -43,7 +43,17 @@ any user is being sent the chat history along with the files shared. Files share
 Note that download folder is hardcoded to:
 USERDIR\DownloadedContent\
 
-PS: Under folder testfiles you can find some lightweight files for testing
+### Additional information regarding implementation: 
+
+- When any component is connected to the server, instead of returning a list with all brokers and available topics, 
+broker is checking the topic and only returns the correct port and IP of the broker that usernode needs to
+connect. User node is then switching connection to the correct broker.
+- Consumer and publisher are designed as two different components. Downtime with one of the components will not affect the other.
+- Due to the separation, one Usernode can connect to different brokers at the same time (e.g. Publisher and Consumer connected to two different topics under different Brokers)
+- Available Topics, Broker IDs and IPs are read by both Brokers and Usernode via /config.txt file. 
+
+
+PS: Under /testfiles/ folder you can find some lightweight files for testing.
  
 
 

@@ -21,13 +21,13 @@ _This is a repository regarding the assignment of Distributed Systems Course in 
 ## RUN INSTRUCTIONS
 
 Backend of event delivery system is implemented with some additions via console for both debugging reasons and examination.
-- 3x Broker main run with: 
+- 3x Broker main runs (manually edit port and ids before running under Broker main) with: 
 
 1. Port: 3000 ID: 0
 2. Port: 4000 ID: 1
 3. Port: 5000 ID: 2
 
-- 3x Usernodes with 3 **different** usernames. 
+- 3x Usernode runs (manually edit username before running under Usernode main) with 3 **different** usernames. 
 
 When running Usernode: 
 1. Specify topic name for consumer and publisher separately as they are 

@@ -23,13 +23,22 @@ public class Publisher extends UserNode implements Runnable,Serializable {
     @Override
     public void run() {
         if (this.socket != null) {
-            System.out.println("Publisher established connection with Broker on port: " + this.socket.getPort());
-            String topic = consoleInput("Please enter publisher topic: ");
+            String topic;
+            synchronized(lock){
+                try {
+                    lock.wait();
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+            System.out.println("SYSTEM: Publisher established connection with Broker on port: " + this.socket.getPort());
+            topic = consoleInput("SYSTEM: Please enter publisher topic: ");
             topic = searchTopic(topic);
             while (!socket.isClosed()) {
+                System.out.println("--------- YOU CAN START CHATTING -----------");
                 String messageToSend = consoleInput();
                 if (messageToSend.equalsIgnoreCase("file")) { //type file to initiate file upload
-                    System.out.println("Please give full file path: \n");
+                    System.out.println("SYSTEM: Please give full file path: \n");
                     String path = this.inputScanner.nextLine();
                     MultimediaFile file = new MultimediaFile(path);
                     this.profile.addFileToProfile(file.getFileName(), file); //adding file to profile
@@ -45,7 +54,7 @@ public class Publisher extends UserNode implements Runnable,Serializable {
                 }
             }
         } else {
-            System.out.println("Publisher exiting...");
+            System.out.println("SYSTEM: Publisher exiting...");
         }
     }
 
@@ -56,7 +65,7 @@ public class Publisher extends UserNode implements Runnable,Serializable {
         for (int i = 0; i < chunkList.size(); i++) { //get all byte arrays, create chunk name and value obj
             StringBuilder strB = new StringBuilder(file.getFileName());
             String chunkName = strB.insert(file.getFileName().lastIndexOf("."), String.format("_%s", i)).toString();
-            chunk = new Value("Sending file chunk", chunkName, this.profile, topic, fileID,
+            chunk = new Value("SYSTEM: Sending file chunk", chunkName, this.profile, topic, fileID,
                     file.getNumberOfChunks() - i - 1, chunkList.get(i), pubRequest);
             push(chunk);
         }
@@ -78,15 +87,15 @@ public class Publisher extends UserNode implements Runnable,Serializable {
         while(true) {
             int response = checkBroker(topic); //asking and receiving port number for correct Broker based on the topic
             if (response == 0) {
-                System.out.println("There is no existing topic named: " + topic +". Here are available ones: " + availableTopics);
-                topic = consoleInput("Please enter publisher topic: ");
+                System.out.println("SYSTEM: There is no existing topic named: " + topic +". Here are available ones: " + availableTopics);
+                topic = consoleInput("SYSTEM: Please enter publisher topic: ");
             } else if (response != socket.getPort()) { //if we are not connected to the right one, switch conn
                 System.out.println("SYSTEM: Switching Publisher connection to another broker on port: " + response);
                 connect(response, pubRequest);
             } else {
                 if (!profile.checkSub(topic)) { //check if subbed
                     profile.sub(topic);
-                    System.out.printf("Subbed to topic:%s %n\n", topic);
+                    System.out.printf("SYSTEM: Subbed to topic:%s %n\n", topic);
                 }
                 break;
             }
@@ -105,12 +114,12 @@ public class Publisher extends UserNode implements Runnable,Serializable {
     public synchronized void push(Value value){ //initial push
 
         try {
-            System.out.printf("Trying to push to topic: %s with value: %s%n\n", value.getTopic() , value);
+            System.out.printf("SYSTEM: Trying to push to topic: %s with value: %s%n\n", value.getTopic() , value);
             if (value.getMessage() != null){
                 objectOutputStream.writeObject(value); // if value is not null write to stream
                 objectOutputStream.flush();
             }
-            else throw new RuntimeException("Could not write to stream. Message corrupted.\n"); //else throw exc
+            else throw new RuntimeException("SYSTEM: Could not write to stream. Message corrupted.\n"); //else throw exc
         } catch (IOException e){
             System.out.println(e.getMessage());
             disconnect();

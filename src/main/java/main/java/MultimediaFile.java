@@ -29,7 +29,7 @@ public class MultimediaFile implements Serializable {
         this.fileName = multimediaFile.getName();
         this.setData();
         this.setFileType();
-        this.fileID = UUID.randomUUID().toString();
+        this.fileID = UUID.randomUUID().toString(); //we implement file IDs to identify the chunks of the same file on consumer
     }
 
     private void setData() { //method for file attributes to set date (or more if needed)

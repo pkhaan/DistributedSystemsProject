@@ -24,7 +24,7 @@ public class Broker implements Serializable {
         this.serverSocket = serverSocket;
         this.address = address;
         this.id = id;
-        readConfig(System.getProperty("user.dir").concat("\\src\\main\\java\\main\\java\\config.txt"));
+        readConfig(System.getProperty("user.dir").concat("\\src\\main\\java\\main\\java\\config.txt")); //reading ports ids and ips from config file
         hashTopics();
         assignTopicsToBrokers();
     }
@@ -34,7 +34,7 @@ public class Broker implements Serializable {
             while (!serverSocket.isClosed()){
                 Socket socket = serverSocket.accept();
                 System.out.println("SYSTEM: A new component connected!");
-                ClientHandler clientHandler = new ClientHandler(socket);
+                ClientHandler clientHandler = new ClientHandler(socket); //client handler as a different thread for both consumer and publisher to handle each connection
                 Thread thread = new Thread(clientHandler);
                 thread.start();
             }
@@ -74,7 +74,7 @@ public class Broker implements Serializable {
             reader.useDelimiter(","); // comma as delimiter
             String id, hostname, port;
             id = reader.next();
-            while(reader.hasNext() && !id.equalsIgnoreCase("#")){
+            while(reader.hasNext() && !id.equalsIgnoreCase("#")){ //when # is read we know that we reached topics section
                 hostname = reader.next();
                 port = reader.next();
                 portsAndAddresses.put(parseInt(port),hostname);
@@ -97,7 +97,7 @@ public class Broker implements Serializable {
         }
     }
 
-    private static void assignTopicsToBrokers(){ //hash(topic) mod N to assign brokers
+    private static void assignTopicsToBrokers(){ //hash(topic) mod N to assign topics to brokers
         for (Map.Entry<BigInteger, String> entry : hashedTopics.entrySet()){
             topicsToBrokers.put(entry.getValue(), entry.getKey().mod(BigInteger.valueOf(3)).intValue());
         }
@@ -124,12 +124,12 @@ public class Broker implements Serializable {
         int id = -1;
         for (Map.Entry<String, Integer> entry : topicsToBrokers.entrySet()){
             if (entry.getKey().equalsIgnoreCase(topic)){
-                id = entry.getValue();
+                id = entry.getValue(); //getting the id
             }
         }
         for (Map.Entry<Integer, Integer> entry : availableBrokers.entrySet()){
             if (entry.getKey().equals(id)){
-                port = entry.getValue();
+                port = entry.getValue(); //finding the correct broker based on the id retrieved above
             }
         }
         return port;
@@ -137,8 +137,8 @@ public class Broker implements Serializable {
 
     public static void main(String[] args) throws IOException {
 
-        ServerSocket serverSocket = new ServerSocket(3000); //port numbers 3000/4000/5000
-        Broker broker = new Broker(serverSocket, InetAddress.getByName("127.0.0.1"), 0); //with IDs 0/1/2 respectively
+        ServerSocket serverSocket = new ServerSocket(5000); //port numbers 3000/4000/5000
+        Broker broker = new Broker(serverSocket, InetAddress.getByName("127.0.0.1"), 2); //with IDs 0/1/2 respectively
         System.out.println("SYSTEM: Broker_" + broker.getBrokerID()+" initialized at: "
                 + serverSocket + "with address: " +  broker.getBrokerAddress());
         broker.startBroker();

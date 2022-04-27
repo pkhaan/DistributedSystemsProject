@@ -27,7 +27,7 @@ public class Consumer extends UserNode implements Runnable,Serializable {
         if (this.socket != null) {
             System.out.println("SYSTEM: Consumer established connection with Broker on port: " + this.socket.getPort());
             String topic;
-            synchronized (lock) {
+            synchronized (lock) { // consumer's part will run first asking for topic, locking and notifying publisher once we received the topic successfully
                 topic = consoleInput("SYSTEM: Please enter consumer topic: ");
                 if (topic != null) {
                     while (true) {
@@ -47,28 +47,28 @@ public class Consumer extends UserNode implements Runnable,Serializable {
             List<Value> chunkList = new ArrayList<>(); //separating chunks from live messages
             for (Value message : data) {
                 if (message.isFile()) {
-                    chunkList.add(message);
+                    chunkList.add(message); //if its a file add it to the chunklist
                 } else {
-                    System.out.println(message.getProfile().getUsername() + ": " + message.getMessage());
+                    System.out.println(message.getProfile().getUsername() + ": " + message.getMessage()); //if not, print the message to console
                 }
             }
-            writeFilesByID(chunkList); //sorting and writing files
+            writeFilesByID(chunkList); //sorting chunk list and writing files
             while (!socket.isClosed()) {
-                listenForMessage(); //listening for messages
+                listenForMessage(); //listening for messages while we are connected
             }
         } else {
             System.out.println("SYSTEM: Consumer exiting...");
         }
     }
 
-    private void listenForMessage(){ //main consumer functionality
+    private void listenForMessage(){ //main consumer functionality,listening for messages and files while connected as consumer to a specific topic
         try {
             Object message = objectInputStream.readObject();
-            if (message instanceof Value && ((Value)message).getRequestType().equalsIgnoreCase("liveMessage")){
+            if (message instanceof Value && ((Value)message).getRequestType().equalsIgnoreCase("liveMessage")){ //live message case
                 System.out.println("SYSTEM: Receiving live chat message:" + message);
                 System.out.println(((Value) message).getProfile().getUsername() +":" + ((Value) message).getMessage());
             }
-            else if (message instanceof Value && ((Value)message).getRequestType().equalsIgnoreCase("liveFile")){
+            else if (message instanceof Value && ((Value)message).getRequestType().equalsIgnoreCase("liveFile")){ //live file case
                 System.out.println("SYSTEM: " + ((Value) message).getUsername() + " has started file sharing. Filename: " + ((Value) message).getFilename());
                 List<Value> chunkList = new ArrayList<>();
                 int incomingChunks = ((Value) message).getRemainingChunks();
@@ -87,13 +87,13 @@ public class Consumer extends UserNode implements Runnable,Serializable {
     }
 
 
-    private synchronized List<Value> getConversationData(String topic){
+    private synchronized List<Value> getConversationData(String topic){ //getting conversation history once we connect to the topic
         List<Value> data = new ArrayList<>();
         Value value = new Value("datareq", this.profile, topic, conRequest);
         try {
             objectOutputStream.writeObject(value);
             objectOutputStream.flush();
-            int incomingTopicMessages = (Integer)objectInputStream.readObject();
+            int incomingTopicMessages = (Integer)objectInputStream.readObject(); //asking how many messages (chunks + livechat) to read
             System.out.println("SYSTEM: Number of conversation history messages and files: " + incomingTopicMessages);
             for(int i= 0; i < incomingTopicMessages; i++){
                 data.add((Value)objectInputStream.readObject());
@@ -105,7 +105,7 @@ public class Consumer extends UserNode implements Runnable,Serializable {
         return data;
     }
 
-    private synchronized int checkBroker(String topic){ //checking if we are on the correct broker
+    private synchronized int checkBroker(String topic){ //asking if we are on the correct broker for the topic
         int response = 0;
         try {
             objectOutputStream.writeObject(topic);
@@ -136,7 +136,7 @@ public class Consumer extends UserNode implements Runnable,Serializable {
             }
             System.out.println(fileList);
             Value[] sortedChunks = new Value[fileList.size()];
-            for (Value chunk : fileList){ //sorting them according to the number on the chunk name
+            for (Value chunk : fileList){ //and sorting them according to the number on the chunk name
                 int index = parseInt(chunk.getFilename().substring
                         (chunk.getFilename().indexOf("_") + 1, chunk.getFilename().indexOf("_") + 2));
                 sortedChunks[index] = chunk;
@@ -146,7 +146,7 @@ public class Consumer extends UserNode implements Runnable,Serializable {
             Path path = Paths.get(downloadPath + filename + fileExt);
             int counter = 1;
             String existString;
-            while (Files.exists(path)){ //if file exists loop with a counter and change filename to filename%counter%.extension
+            while (Files.exists(path)){ //if file exists loop with a counter and change filename to filename%counter%.ext
                 System.out.println(path);
                 existString = String.format("(%s)", counter);
                 path = Paths.get(downloadPath + filename + existString + fileExt);

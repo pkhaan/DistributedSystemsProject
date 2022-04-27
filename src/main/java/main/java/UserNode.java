@@ -21,13 +21,13 @@ public class UserNode implements Serializable {
 
     protected static final Object lock = new Object();
 
-    protected static final int[] portNumbers = new int[]{3000,4000,5000};
-    protected static HashMap<Integer,String> portsAndAddresses = new HashMap<>(); //ports and addresses
+    protected static final int[] portNumbers = new int[]{3000,4000,5000}; //for testing 1 broker only please keep 1 port and run the broker on the same
+    protected static HashMap<Integer,String> portsAndAddresses = new HashMap<>(); //ports and addresse
     protected static HashMap<Integer,Integer> availableBrokers =  new HashMap<>(); //ids, ports
     protected static List<String> availableTopics = new ArrayList<>();
 
-    protected ArrayList<Publisher> alivePublisherConnections;
-    protected ArrayList<Consumer> aliveConsumerConnections;
+    protected ArrayList<Publisher> alivePublisherConnections; //keeping alive publisher connections
+    protected ArrayList<Consumer> aliveConsumerConnections; //keeping alive consumer connections
 
 
     public UserNode(){
@@ -54,7 +54,7 @@ public class UserNode implements Serializable {
         return new Profile("NoUsername");
     } //creates a noUsername prof
 
-    protected synchronized String consoleInput(String message){
+    protected synchronized String consoleInput(String message){ //synchronized method to be used with the lock
         System.out.println(message);
         String input = null;
         if (this.inputScanner.hasNextLine()) {
@@ -71,8 +71,8 @@ public class UserNode implements Serializable {
         return input;
     }
 
-    protected void connect(int port, String type){
-        try{
+    protected void connect(int port, String type){ //initial connection method, initializes socket, streams and scanner as well as passes an
+        try{ //initial connection message to the broker when connecting (this is also used when switching connections between brokers)
             this.socket = new Socket( "localhost", port);
             this.objectOutputStream = new ObjectOutputStream(socket.getOutputStream());
             this.objectInputStream = new ObjectInputStream(socket.getInputStream());
@@ -226,11 +226,11 @@ public class UserNode implements Serializable {
     public static void main(String[] args) { //running UserNode
 
         UserNode.readConfig(System.getProperty("user.dir").concat("\\src\\main\\java\\main\\java\\config.txt"));
-        Profile profile = new Profile("Kostas");
+        Profile profile = new Profile("Mitsos");
         Publisher kostaspub = new Publisher(profile);
         Consumer kostascon = new Consumer(profile);
         Thread pub = new Thread(kostaspub); //initiating both on random port
-        Thread con = new Thread(kostascon);
+        Thread con = new Thread(kostascon);// both components ask a random broker at first and then getting redirected to the correct one if needed
         pub.start();
         con.start();
     }

@@ -11,9 +11,9 @@ import java.util.*;
 public class Profile implements Serializable{
 
     private String username;
-    public static Multimap<String,MultimediaFile> userMultimediaFileMap;
-    private final Queue<MultimediaFile> pendingUpload;
-    private final List<String> userSubscribedConversations;
+    public static Multimap<String,MultimediaFile> userMultimediaFileMap; //profiles files
+    private final Queue<MultimediaFile> pendingUpload; //q for upload
+    private final List<String> userSubscribedConversations; //subbed user's topics
 
     public Profile(String username){
         this.username = username;

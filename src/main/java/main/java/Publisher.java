@@ -5,7 +5,7 @@ import java.io.Serializable;
 import java.util.List;
 
 
-public class Publisher extends UserNode implements Runnable,Serializable {
+public class Publisher extends UserNode implements Runnable,Serializable{
 
 
     public Publisher(Profile profile){
@@ -24,8 +24,8 @@ public class Publisher extends UserNode implements Runnable,Serializable {
     public void run() {
         if (this.socket != null) {
             String topic;
-            synchronized(lock){
-                try {
+            synchronized(lock){ //locking and waiting for consumer to receive its input first from the user
+                try {  //this will not be needed later with the Android app
                     lock.wait();
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
@@ -33,20 +33,20 @@ public class Publisher extends UserNode implements Runnable,Serializable {
             }
             System.out.println("SYSTEM: Publisher established connection with Broker on port: " + this.socket.getPort());
             topic = consoleInput("SYSTEM: Please enter publisher topic: ");
-            topic = searchTopic(topic);
+            topic = searchTopic(topic); //finding topic
+            System.out.println("--------- YOU CAN START CHATTING -----------");
             while (!socket.isClosed()) {
-                System.out.println("--------- YOU CAN START CHATTING -----------");
                 String messageToSend = consoleInput();
                 if (messageToSend.equalsIgnoreCase("file")) { //type file to initiate file upload
                     System.out.println("SYSTEM: Please give full file path: \n");
                     String path = this.inputScanner.nextLine();
                     MultimediaFile file = new MultimediaFile(path);
-                    this.profile.addFileToProfile(file.getFileName(), file); //adding file to profile
+                    this.profile.addFileToProfile(file.getFileName(), file); //adding file to profile (later we will check if there are any new uploads and push the file)
                 } else if (messageToSend.equalsIgnoreCase("exit")) { //exit for dc
-                    disconnectComponents(this.currentPort);
+                    disconnectComponents(this.currentPort); //disconnects both consumer and publisher (this can be changed to disconnect only publisher if needed)
                 } else {
                     Value messageValue = new Value(messageToSend, this.profile, topic, pubRequest);
-                    push(messageValue);
+                    push(messageValue); //if it's a live chat message we push it
                 }
                 if (checkForNewContent()) { //if a new file is added to profile we also push it
                     MultimediaFile uploadedFile = getNewContent();

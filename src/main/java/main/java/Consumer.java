@@ -135,6 +135,8 @@ public class Consumer extends UserNode implements Runnable,Serializable {
         String temp ="";
         List<String> fileIDs = new ArrayList<>();
         for (Value chunk : chunkList) { //separating chunks by file id
+            System.out.println("Chunklist");
+            System.out.println(chunk);
             if (!chunk.getFileID().equalsIgnoreCase(temp)) {
                 fileIDs.add(chunk.getFileID());
                 temp = chunk.getFileID();
@@ -143,6 +145,8 @@ public class Consumer extends UserNode implements Runnable,Serializable {
         for (String id : fileIDs){ //for each id we keep the chunks in a list
             List <Value> fileList = new ArrayList<>();
             for (Value chunk : chunkList){
+                System.out.println("fileList");
+                System.out.println(chunk);
                 if (id.equalsIgnoreCase(chunk.getFileID())){
                     fileList.add(chunk);
                 }
@@ -150,8 +154,7 @@ public class Consumer extends UserNode implements Runnable,Serializable {
             System.out.println(fileList);
             Value[] sortedChunks = new Value[fileList.size()];
             for (Value chunk : fileList){ //and sorting them according to the number on the chunk name
-                int index = parseInt(chunk.getFilename().substring
-                        (chunk.getFilename().indexOf("_") + 1, chunk.getFilename().indexOf("_") + 2));
+                int index = parseInt(chunk.getFilename().substring(chunk.getFilename().indexOf("_") + 1, chunk.getFilename().indexOf(".")));
                 sortedChunks[index] = chunk;
             }
             String filename = sortedChunks[0].getFilename().substring(0, sortedChunks[0].getFilename().indexOf("_"));
@@ -170,6 +173,8 @@ public class Consumer extends UserNode implements Runnable,Serializable {
             try {
                 FileOutputStream os = new FileOutputStream(download);
                 for (Value chunk : sortedChunks) {
+                    System.out.println("sortedList");
+                    System.out.println(chunk);
                     os.write(chunk.getChunk());
                 }
                 os.close();

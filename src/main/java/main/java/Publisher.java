@@ -10,13 +10,13 @@ public class Publisher extends UserNode implements Runnable,Serializable{
 
     public Publisher(Profile profile){
         super(profile);
-        connect(currentPort, pubRequest);
+        connect(currentPort, currentAddress, pubRequest);
         alivePublisherConnections.add(this);
     }
 
     public Publisher(int port, Profile profile){
         super(port, profile);
-        connect(currentPort, pubRequest);
+        connect(currentPort, currentAddress, pubRequest);
         alivePublisherConnections.add(this);
     }
 
@@ -70,7 +70,7 @@ public class Publisher extends UserNode implements Runnable,Serializable{
             push(chunk);
         }
     }
-    private synchronized int checkBroker(String topic){ //checking if we are on the correct broker
+    private synchronized int checkBrokerPort(String topic){ //checking if we are on the correct broker
         int response = 0;
         try {
             objectOutputStream.writeObject(topic);
@@ -83,15 +83,28 @@ public class Publisher extends UserNode implements Runnable,Serializable{
         return response;
     }
 
+    private synchronized String checkBrokerAddress(){ //checking if we are on the correct broker
+        String response = null;
+        try {
+            response = (String)objectInputStream.readObject();
+        } catch (IOException | ClassNotFoundException e) {
+            System.out.println(e.getMessage());
+            disconnect();
+        }
+        return response;
+    }
+
+
     public String searchTopic(String topic) { //initial search
         while(true) {
-            int response = checkBroker(topic); //asking and receiving port number for correct Broker based on the topic
-            if (response == 0) {
+            int portResponse = checkBrokerPort(topic); //asking and receiving port number for correct Broker based on the topic
+            String addressResponse = checkBrokerAddress();
+            if (portResponse == 0 || addressResponse == null) {
                 System.out.println("SYSTEM: There is no existing topic named: " + topic +". Here are available ones: " + availableTopics);
                 topic = consoleInput("SYSTEM: Please enter publisher topic: ");
-            } else if (response != socket.getPort()) { //if we are not connected to the right one, switch conn
-                System.out.println("SYSTEM: Switching Publisher connection to another broker on port: " + response);
-                connect(response, pubRequest);
+            } else if (portResponse != socket.getPort() || !addressResponse.equalsIgnoreCase(this.socket.getInetAddress().toString().substring(1))) { //if we are not connected to the right one, switch conn
+                System.out.println("SYSTEM: Switching Publisher connection to another broker on port: " + portResponse + " and hostname: " + addressResponse);
+                connect(portResponse, addressResponse, pubRequest);
             } else {
                 if (!profile.checkSub(topic)) { //check if subbed
                     profile.sub(topic);

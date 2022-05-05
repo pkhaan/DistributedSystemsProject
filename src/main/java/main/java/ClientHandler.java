@@ -1,6 +1,5 @@
 package main.java;
 
-import com.google.common.base.Objects;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.LinkedListMultimap;
 import com.google.common.collect.Multimap;
@@ -48,18 +47,21 @@ public class ClientHandler implements Runnable,Serializable {
         Object streamObject = readStream();
         System.out.println(streamObject);
         int correctPort = -1;
+        String correctAddress = null;
         if (streamObject instanceof String topic) {
             while (correctPort <= 0) { //while provided topic does not exist, we continuously ask for a valid one from the component
-                correctPort = Broker.searchBroker(topic);
-                sendCorrectBroker(correctPort);
+                correctPort = Broker.searchBrokerPort(topic);
+                correctAddress = Broker.getAddress(correctPort);
+                sendCorrectBrokerPort(correctPort); //sending correct Broker port
+                sendCorrectBrokerAddress(correctAddress); //sending correct Broker address
                 if (correctPort <= 0) {
-                    topic = (String) readStream();
+                    topic = (String)readStream();
                 }
             }
         }
-        if (correctPort == this.socket.getLocalPort()) { //if we are on the correct broker
+        if (correctPort == this.socket.getLocalPort() && Objects.equals(correctAddress, Broker.getAddress(this.socket.getLocalPort()))) { //if we are on the correct broker
             while (!socket.isClosed()) {
-                Value value = (Value) readStream();
+                Value value = (Value)readStream();
                 System.out.println(value);
                 if (value != null) {
                     if (value.getRequestType().equalsIgnoreCase("Publisher")) {
@@ -112,9 +114,19 @@ public class ClientHandler implements Runnable,Serializable {
     }
 
 
-    private synchronized void sendCorrectBroker(int port){
+    private synchronized void sendCorrectBrokerPort(int port){
         try {
             out.writeObject(port); //sending correct broker port to UserNode
+            out.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private synchronized void sendCorrectBrokerAddress(String address){
+        try {
+            System.out.println(address);
+            out.writeObject(address); //sending correct broker port to UserNode
             out.flush();
         } catch (IOException e) {
             e.printStackTrace();

@@ -12,13 +12,13 @@ public class Consumer extends UserNode implements Runnable,Serializable {
 
     public Consumer(Profile profile){
         super(profile);
-        connect(currentPort, conRequest);
+        connect(currentPort, currentAddress, conRequest);
         aliveConsumerConnections.add(this);
     }
 
     public Consumer(int port, Profile profile){
         super(port, profile);
-        connect(currentPort, conRequest);
+        connect(currentPort, currentAddress, conRequest);
         aliveConsumerConnections.add(this);
     }
 
@@ -31,13 +31,15 @@ public class Consumer extends UserNode implements Runnable,Serializable {
                 topic = consoleInput("SYSTEM: Please enter consumer topic: ");
                 if (topic != null) {
                     while (true) {
-                        int response = checkBroker(topic);
-                        if (response == 0) { //non-existing topic case
+                        int portResponse = checkBrokerPort(topic);
+                        String addressResponse = checkBrokerAddress();
+                        if (portResponse == 0 || addressResponse==null) { //non-existing topic case
                             System.out.println("SYSTEM: There is no existing topic named: " + topic + ". Here are available ones: " + availableTopics);
                             topic = consoleInput("SYSTEM: Please enter consumer topic: ");
-                        } else if (response != socket.getPort()) { //incorrect port
-                            System.out.println("SYSTEM: Switching Consumer connection to another broker on port: " + response);
-                            connect(response, conRequest);
+                        } else if (portResponse != socket.getPort() || !addressResponse.equalsIgnoreCase(this.socket.getInetAddress().toString().substring(1))) { //incorrect port
+                            System.out.println(this.socket.getInetAddress().toString());
+                            System.out.println("SYSTEM: Switching Consumer connection to another broker on port: " + portResponse + " and hostname: " + addressResponse);
+                            connect(portResponse, addressResponse, conRequest);
                         } else break; //correct port
                     }
                 }
@@ -105,12 +107,23 @@ public class Consumer extends UserNode implements Runnable,Serializable {
         return data;
     }
 
-    private synchronized int checkBroker(String topic){ //asking if we are on the correct broker for the topic
+    private synchronized int checkBrokerPort(String topic){ //asking if we are on the correct broker for the topic
         int response = 0;
         try {
             objectOutputStream.writeObject(topic);
             objectOutputStream.flush();
             response = (int)objectInputStream.readObject();
+        } catch (IOException | ClassNotFoundException e) {
+            System.out.println(e.getMessage());
+            disconnect();
+        }
+        return response;
+    }
+
+    private synchronized String checkBrokerAddress(){ //broker will also send the address so we read it as well
+        String response = null;
+        try {
+            response = (String)objectInputStream.readObject();
         } catch (IOException | ClassNotFoundException e) {
             System.out.println(e.getMessage());
             disconnect();

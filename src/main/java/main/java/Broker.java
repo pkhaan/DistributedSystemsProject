@@ -29,6 +29,7 @@ public class Broker implements Serializable {
         assignTopicsToBrokers();
     }
 
+
     public void startBroker(){
         try {
             while (!serverSocket.isClosed()){
@@ -119,7 +120,12 @@ public class Broker implements Serializable {
         }
     }
 
-    public static int searchBroker(String topic){ //searching for the correct broker given the topic
+    public static String getAddress(int correctPort) {
+        System.out.println(portsAndAddresses.get(correctPort));
+        return portsAndAddresses.get(correctPort);
+    }
+
+    public static int searchBrokerPort(String topic){ //searching for the correct broker given the topic
         int port = 0;
         int id = -1;
         for (Map.Entry<String, Integer> entry : topicsToBrokers.entrySet()){
@@ -137,8 +143,8 @@ public class Broker implements Serializable {
 
     public static void main(String[] args) throws IOException {
 
-        ServerSocket serverSocket = new ServerSocket(5000); //port numbers 3000/4000/5000
-        Broker broker = new Broker(serverSocket, InetAddress.getByName("127.0.0.1"), 2); //with IDs 0/1/2 respectively
+        ServerSocket serverSocket = new ServerSocket(3000); //port numbers 3000/4000/5000
+        Broker broker = new Broker(serverSocket, InetAddress.getByName("127.0.0.1"), 0); //with IDs 0/1/2 respectively
         System.out.println("SYSTEM: Broker_" + broker.getBrokerID()+" initialized at: "
                 + serverSocket + "with address: " +  broker.getBrokerAddress());
         broker.startBroker();

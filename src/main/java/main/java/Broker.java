@@ -144,7 +144,7 @@ public class Broker implements Serializable {
     public static void main(String[] args) throws IOException {
 
         ServerSocket serverSocket = new ServerSocket(3000); //port numbers 3000/4000/5000
-        Broker broker = new Broker(serverSocket, InetAddress.getByName("127.0.0.1"), 0); //with IDs 0/1/2 respectively
+        Broker broker = new Broker(serverSocket, InetAddress.getByName("192.168.100.3"), 0); //with IDs 0/1/2 respectively
         System.out.println("SYSTEM: Broker_" + broker.getBrokerID()+" initialized at: "
                 + serverSocket + "with address: " +  broker.getBrokerAddress());
         broker.startBroker();

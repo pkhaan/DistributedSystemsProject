@@ -11,10 +11,9 @@ _This is a repository regarding the assignment of Distributed Systems Course in 
 >The main Language used in the project is Java .
 
 
-| Java     |Android App|
+| Java     |Maven|
 | ---      | ---       |
-| IntelliJ | JetBrains |
-| Implementation|Android Studio|    
+| Gradle|Android Studio|    
 
 
 

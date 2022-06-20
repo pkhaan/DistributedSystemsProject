@@ -4,9 +4,9 @@ _This is a repository regarding the assignment of Distributed Systems Course in 
 
 ### Collaborators
 
-* **Kostas Kostantios**
-* **Nikolas Giannakopoulos**
-* **Petros Chanas**
+* **[Kostas Kostantios](https://github.com/Aizengr)**
+* **[Nikolas Giannakopoulos](https://github.com/nickgiann)**
+* **[Petros Chanas](https://github.com/pkhaan)**
 
 >The main Language used in the project is Java .
 

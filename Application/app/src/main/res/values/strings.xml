@@ -1,0 +1,28 @@
+<resources>
+    <string name="app_name">DS project</string>
+    <string name="title_activity_profile">ProfileActivity</string>
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+    <string name="nav_header_title">Android Studio</string>
+    <string name="nav_header_subtitle">android.studio@android.com</string>
+    <string name="nav_header_desc">Navigation header</string>
+    <string name="action_settings">Settings</string>
+
+    <string name="menu_home">Home</string>
+    <string name="menu_gallery">Gallery</string>
+    <string name="menu_slideshow">Slideshow</string>
+    <string name="this_is_an_attachment_test_png">this_is_an_attachment_test.png</string>
+    <string name="play_button">play_button</string>
+    <string name="video_thumbnail">video_thumbnail</string>
+    <string name="send">Send</string>
+    <string name="enter_message">Enter Message</string>
+    <string name="topic">Topic</string>
+    <string name="attachmentupload">attachmentUpload</string>
+    <string name="videoupload">videoUpload</string>
+    <string name="camera">camera</string>
+    <string name="imageupload">imageUpload</string>
+    <string name="sendbutton">sendButton</string>
+    <string name="profile">profile</string>
+    <string name="conversation_subs_count">Conversation subs count:</string>
+    <string name="profile_name">Profile name</string>
+</resources>

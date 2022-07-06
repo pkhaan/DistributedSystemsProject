@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/layout_chat"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:fitsSystemWindows="true"
+        app:layout_constraintTop_toTopOf="parent">
+
+
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/toolbar_chat"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:theme="@style/Widget.AppCompat.Toolbar"
+            app:popupTheme="@style/Theme.AppCompat.Light">
+
+            <TextView
+                android:id="@+id/topic_text"
+                android:layout_width="150dp"
+                android:layout_height="38dp"
+                android:layout_marginStart="10dp"
+                android:fontFamily="sans-serif-medium"
+                android:text="@string/topic"
+                android:textColor="@color/white"
+                android:textSize="25sp"
+                android:typeface="normal" />
+
+            <ImageButton
+
+                android:id="@+id/profile_button"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_alignParentStart="true"
+                android:layout_alignParentTop="true"
+                android:layout_marginStart="180dp"
+                android:adjustViewBounds="true"
+                android:background="@null"
+                android:contentDescription="@string/profile"
+                android:scaleType="fitXY"
+                app:srcCompat="@drawable/profile" />
+
+
+        </androidx.appcompat.widget.Toolbar>
+
+        <SearchView
+            android:id="@+id/topic_search"
+            android:layout_width="match_parent"
+            android:layout_height="30dp"
+            android:queryHint="Search topic here"
+            android:iconifiedByDefault="false"/>
+
+        <ProgressBar
+            android:id="@+id/searchProgressBar"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:indeterminate="true"
+            android:max="100"
+            android:backgroundTint="@color/white"
+            android:layout_below="@+id/framelauout"
+            android:indeterminateTint="#1a09d6"
+            android:layout_marginTop="-7dp"/>
+
+
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recycler_chat"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginTop="0dp"
+        android:layout_marginBottom="16dp"
+        app:layout_constrainedHeight="true"
+        app:layout_constraintBottom_toTopOf="@+id/text_indicator"
+        app:layout_constraintTop_toBottomOf="@+id/layout_chat"
+        app:layout_constraintVertical_bias="0.0"
+        tools:layout_editor_absoluteX="0dp" />
+
+    <TextView
+        android:id="@+id/text_indicator"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toTopOf="@id/view"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <View
+        android:id="@+id/view"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginBottom="4dp"
+        android:background="#e0e0e0"
+        app:layout_constraintBottom_toTopOf="@+id/layout_chatbox"
+        tools:layout_editor_absoluteX="0dp" />
+
+    <RelativeLayout
+        android:id="@+id/layout_chatbox"
+        android:layout_width="match_parent"
+        android:background="@color/white"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+
+        <EditText
+            android:id="@+id/edit_message"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_marginStart="10dp"
+            android:layout_marginEnd="6dp"
+            android:layout_toStartOf="@+id/send_button"
+            android:layout_toEndOf="@+id/attachment_upload_button"
+            android:background="@android:color/darker_gray"
+            android:hint="@string/enter_message"
+            android:inputType="text"
+            android:maxLines="6"
+            tools:ignore="Autofill" />
+
+        <ImageButton
+            android:id="@+id/send_button"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:layout_alignParentEnd="true"
+            android:background="?attr/selectableItemBackground"
+            android:text="@string/send"
+            android:textColor="@color/black"
+            app:srcCompat="@android:drawable/ic_menu_send"
+            android:contentDescription="@string/sendbutton" />
+
+        <ImageButton
+            android:id="@+id/image_upload_button"
+            android:layout_width="40dp"
+            android:layout_height="50dp"
+            android:layout_alignParentStart="true"
+            android:layout_alignParentTop="true"
+            android:layout_marginStart="116dp"
+            android:layout_marginTop="3dp"
+            android:adjustViewBounds="true"
+            android:background="@null"
+            android:contentDescription="@string/imageupload"
+            android:scaleType="centerInside"
+            app:srcCompat="@drawable/images2" />
+
+        <ImageButton
+
+            android:id="@+id/camera_button"
+            android:layout_width="40dp"
+            android:layout_height="50dp"
+            android:layout_alignParentStart="true"
+            android:layout_alignParentTop="true"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="3dp"
+            android:adjustViewBounds="true"
+            android:background="@null"
+            android:contentDescription="@string/camera"
+            android:scaleType="centerInside"
+            app:srcCompat="@drawable/camera" />
+
+        <ImageButton
+
+            android:id="@+id/video_upload_button"
+            android:layout_width="40dp"
+            android:layout_height="50dp"
+            android:layout_alignParentStart="true"
+            android:layout_alignParentTop="true"
+            android:layout_marginStart="66dp"
+            android:layout_marginTop="3dp"
+            android:adjustViewBounds="true"
+            android:background="@null"
+            android:contentDescription="@string/videoupload"
+            android:scaleType="centerInside"
+            app:srcCompat="@drawable/videos" />
+
+        <ImageButton
+
+            android:id="@+id/attachment_upload_button"
+            android:layout_width="40dp"
+            android:layout_height="50dp"
+            android:layout_alignParentStart="true"
+            android:layout_alignParentTop="true"
+            android:layout_marginStart="166dp"
+            android:layout_marginTop="3dp"
+            android:adjustViewBounds="true"
+            android:background="@null"
+            android:contentDescription="@string/attachmentupload"
+            android:scaleType="centerInside"
+            app:srcCompat="@drawable/attachment2"
+            tools:ignore="TouchTargetSizeCheck" />
+
+
+    </RelativeLayout>
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>
